@@ -110,4 +110,10 @@ https://192.168.13.146/redfish/v1/Systems/Self
   }
 }
 
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! bios ".Attributes.WorkloadProfile"
+vRAN
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! managers '.VirtualMedia."@odata.id"'
+/redfish/v1/Managers/1/VirtualMedia
+
 ```

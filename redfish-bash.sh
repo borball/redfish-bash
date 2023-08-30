@@ -33,6 +33,9 @@ fi
 bmc=$1
 username_password=$2
 cmd=$3
+if [ $# -gt 3 ]; then
+  parameters=${@:4}
+fi
 
 system(){
  local system=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Systems | jq -r '.Members[0]."@odata.id"' )
@@ -40,8 +43,14 @@ system(){
 }
 
 systems(){
- local system=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Systems | jq -r '.Members[0]."@odata.id"' )
- curl -sku "${username_password}" "$bmc""$system" |jq
+  local system=$(system)
+ 
+  if [ -n "$parameters" ]; then
+    curl -sku "${username_password}" "$system" |jq -r "$parameters"
+  else
+    curl -sku "${username_password}" "$system" |jq
+  fi
+ 
 }
 
 manager(){
@@ -50,13 +59,24 @@ manager(){
 }
 
 managers(){
-  local manager=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Managers | jq -r '.Members[0]."@odata.id"' )
-  curl -sku "${username_password}" "$bmc""$manager" |jq
+  local manager=$(manager)
+
+  if [ -n "$parameters" ]; then
+    curl -sku "${username_password}" "$manager" |jq -r "$parameters"
+  else
+    curl -sku "${username_password}" "$manager" |jq
+  fi
 }
 
 bios(){
   local system=$(system)
-  curl -sku "${username_password}" "$system" |jq -r
+  local bios=$(curl -sku "${username_password}" "$system"|jq -r '.Bios."@odata.id"')
+
+  if [ -n "$parameters" ]; then
+    curl -sku "${username_password}" "$bmc""$bios" |jq -r "$parameters"
+  else
+    curl -sku "${username_password}" "$bmc""$bios" |jq
+  fi
 }
 
 eths(){
