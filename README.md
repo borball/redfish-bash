@@ -25,6 +25,8 @@ Available commands :
   virtual-media eject
 ```
 
+## Examples
+
 ```shell
 ## ZT
 # ./redfish-bash.sh https://192.168.13.146 Administrator:superuser manager
