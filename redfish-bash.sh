@@ -6,11 +6,16 @@ if ! type "yq" > /dev/null; then
   echo "Cannot find yq in the path, please install yq on the node first. ref: https://github.com/mikefarah/yq#install"
 fi
 
+BASEDIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
 usage(){
-  echo "Usage :   $0 bmc username:password command [json_path]"
-  echo "Example : $0 https://192.168.13.146 Administrator:superuser managers"
-  echo "Example : $0 https://192.168.13.146 Administrator:superuser bios '.Attributes.WorkloadProfile'"
+  echo "Usage :   $0 command"
+  echo "Example : $0 login https://192.168.13.146 Administrator:superuser"
+  echo "Example : $0 managers"
+  echo "Example : $0 bios '.Attributes.WorkloadProfile'"
+  echo "Run : $0 login before using other commands"
   echo "Available commands : "
+  echo "  login [bmc] [username:password]"
   echo "  system"
   echo "  systems"
   echo "  manager"
@@ -24,7 +29,7 @@ usage(){
   echo "  virtual-media eject"
 }
 
-if [ $# -lt 3 ]
+if [ $# -lt 1 ]
 then
   usage
   exit
@@ -36,15 +41,35 @@ then
   exit
 fi
 
-bmc=$1
-username_password=$2
-cmd=$3
-if [ $# -gt 3 ]; then
-  parameters=${@:4}
+cmd=$1
+
+if [ $# -gt 1 ]; then
+  parameters=${@:2}
 fi
 
+login(){
+  local bmc_info=($parameters)
+  if [ "${#bmc_info[@]}" = 2 ]; then
+    local bmc="${bmc_info[0]}"
+    local username_password="${bmc_info[1]}"
+
+    if [ $(curl -ku "$username_password" -s -o /dev/null -w ''%{http_code}'' "$bmc"/redfish/v1) -eq 200 ]; then
+      echo "login succeed, will use $BASEDIR/.bmc.cfg next time."
+      echo "bmc=$bmc" > "$BASEDIR"/.bmc.cfg
+      echo "username_password=$username_password" >> "$BASEDIR"/.bmc.cfg
+    else
+      echo "login failed, please check."
+      exit 1
+    fi
+  else
+    echo "command invalid, please try login [bmc] [username:password]"
+    exit 1
+  fi
+
+}
+
 system(){
- local system=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Systems | jq -r '.Members[0]."@odata.id"' )
+  local system=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Systems | jq -r '.Members[0]."@odata.id"' )
   echo "$bmc""$system"
 }
 
@@ -161,6 +186,14 @@ virtual-media(){
 }
 
 
-if [ -n "$cmd" ]; then
-  $cmd
+if [ "login" = "$cmd" ]; then
+  login
+else
+  if [ -f "$BASEDIR"/.bmc.cfg ]; then
+    source "$BASEDIR"/.bmc.cfg
+    $cmd
+  else
+    echo "Run login before using other commands."
+    exit 1
+  fi
 fi

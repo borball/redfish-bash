@@ -8,10 +8,13 @@
 
 ```shell
 # ./redfish-bash.sh 
-Usage :   ./redfish-bash.sh bmc username:password command [json_path]
-Example : ./redfish-bash.sh https://192.168.13.146 Administrator:superuser managers
-Example : ./redfish-bash.sh https://192.168.13.146 Administrator:superuser bios '.Attributes.WorkloadProfile'
+Usage :   ./redfish-bash.sh command
+Example : ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser
+Example : ./redfish-bash.sh managers
+Example : ./redfish-bash.sh bios '.Attributes.WorkloadProfile'
+Run : ./redfish-bash.sh login before using other commands
 Available commands : 
+  login [bmc] [username:password]
   system
   systems
   manager
@@ -23,26 +26,31 @@ Available commands :
   virtual-media
   virtual-media insert http://192.168.58.15/iso/agent-130.iso
   virtual-media eject
+
 ```
 
 ## Examples
 
 ```shell
+## login
+# ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser
+login succeed, will use /root/.bmc.cfg next time.
+
 ## ZT
-# ./redfish-bash.sh https://192.168.13.146 Administrator:superuser manager
+# ./redfish-bash.sh manager
 https://192.168.13.146/redfish/v1/Managers/Self
 ## HPE
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! manager
+# ./redfish-bash.sh  manager
 https://192.168.14.130/redfish/v1/Managers/1
 
 ## ZT
-# ./redfish-bash.sh https://192.168.13.146 Administrator:superuser system
+# ./redfish-bash.sh system
 https://192.168.13.146/redfish/v1/Systems/Self
 ## HPE
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! system
+# ./redfish-bash.sh system
 https://192.168.14.130/redfish/v1/Systems/1
 
-# ./redfish-bash.sh https://192.168.13.146 Administrator:superuser eths
+# ./redfish-bash.sh eths
 {
   "Id": "EthernetInterface0",
   "MACAddress": "B4:96:91:B4:8A:E8",
@@ -125,34 +133,34 @@ https://192.168.14.130/redfish/v1/Systems/1
   }
 }
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! bios ".Attributes.WorkloadProfile"
+# ./redfish-bash.sh bios ".Attributes.WorkloadProfile"
 vRAN
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! managers '.VirtualMedia."@odata.id"'
+# ./redfish-bash.sh managers '.VirtualMedia."@odata.id"'
 /redfish/v1/Managers/1/VirtualMedia
 
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power
+# ./redfish-bash.sh power
 On
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power abc
+# ./redfish-bash.sh power abc
 abc is not valid command.
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power on
+# ./redfish-bash.sh power on
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageArgs":["Power is on"],"MessageId":"iLO.2.16.InvalidOperationForSystemState"}]}}400 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power off
+# ./redfish-bash.sh power off
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power restart
+# ./redfish-bash.sh power restart
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! virtual-media insert http://192.168.58.15/iso/agent-130.iso
+# ./redfish-bash.sh virtual-media insert http://192.168.58.15/iso/agent-130.iso
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.InsertMedia
 
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! virtual-media 
+# ./redfish-bash.sh virtual-media 
 {
   "@odata.context": "/redfish/v1/$metadata#VirtualMedia.VirtualMedia",
   "@odata.etag": "W/\"0D292F2F\"",
@@ -196,7 +204,7 @@ abc is not valid command.
   "WriteProtected": true
 }
 
-# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! virtual-media eject
+# ./redfish-bash.sh virtual-media eject
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.EjectMedia
 
 ```
