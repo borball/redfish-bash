@@ -1,5 +1,7 @@
 # redfish-bash
 
+A wrapper script of redfish API, tested on ZT/HPE/Dell servers.
+
 ## Usage
 
 ```shell
@@ -42,6 +44,9 @@ https://192.168.13.146/redfish/v1/Managers/Self
 ## HPE
 # ./redfish-bash.sh  manager
 https://192.168.14.130/redfish/v1/Managers/1
+## Dell
+$ ./redfish-bash.sh manager
+https://192.168.18.162/redfish/v1/Managers/iDRAC.Embedded.1
 
 ## ZT
 # ./redfish-bash.sh system
@@ -49,6 +54,9 @@ https://192.168.13.146/redfish/v1/Systems/Self
 ## HPE
 # ./redfish-bash.sh system
 https://192.168.14.130/redfish/v1/Systems/1
+## Dell
+$ ./redfish-bash.sh system
+https://192.168.18.162/redfish/v1/Systems/System.Embedded.1
 
 # ./redfish-bash.sh eths
 {
