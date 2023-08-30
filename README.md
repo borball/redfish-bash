@@ -12,20 +12,28 @@ Usage : ./redfish-bash.sh bmc username:password command
 Example : ./redfish-bash.sh https://192.168.13.146 Administrator:superuser command
 available commands:
   system
-  systems
-  manager
-  managers
-  bios
+  systems [json_path]
+  manager 
+  managers [json_path]
+  bios [json_path]
   eths
 
 ```
 
 ```shell
+## ZT
 # ./redfish-bash.sh https://192.168.13.146 Administrator:superuser manager
 https://192.168.13.146/redfish/v1/Managers/Self
+## HPE
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! manager
+https://192.168.14.130/redfish/v1/Managers/1
 
+## ZT
 # ./redfish-bash.sh https://192.168.13.146 Administrator:superuser system
 https://192.168.13.146/redfish/v1/Systems/Self
+## HPE
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! system
+https://192.168.14.130/redfish/v1/Systems/1
 
 # ./redfish-bash.sh https://192.168.13.146 Administrator:superuser eths
 {
