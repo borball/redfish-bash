@@ -8,16 +8,16 @@
 
 ```shell
 # ./redfish-bash.sh 
-Usage : ./redfish-bash.sh bmc username:password command
-Example : ./redfish-bash.sh https://192.168.13.146 Administrator:superuser command
-available commands:
+Usage :   ./redfish-bash.sh bmc username:password command [json_path]
+Example : ./redfish-bash.sh https://192.168.13.146 Administrator:superuser managers
+Example : ./redfish-bash.sh https://192.168.13.146 Administrator:superuser bios '.Attributes.WorkloadProfile'
+Available commands : 
   system
-  systems [json_path]
-  manager 
-  managers [json_path]
-  bios [json_path]
+  systems
+  manager
+  managers
+  bios
   eths
-
 ```
 
 ```shell

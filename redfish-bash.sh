@@ -7,8 +7,9 @@ if ! type "yq" > /dev/null; then
 fi
 
 usage(){
-  echo "Usage :   $0 bmc username:password command"
-  echo "Example : $0 https://192.168.13.146 Administrator:superuser command"
+  echo "Usage :   $0 bmc username:password command [json_path]"
+  echo "Example : $0 https://192.168.13.146 Administrator:superuser managers"
+  echo "Example : $0 https://192.168.13.146 Administrator:superuser bios '.Attributes.WorkloadProfile'"
   echo "Available commands : "
   echo "  system"
   echo "  systems"
