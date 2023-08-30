@@ -18,6 +18,8 @@ Available commands :
   managers
   bios
   eths
+  power
+  power on|off|restart
 ```
 
 ```shell
@@ -124,4 +126,21 @@ vRAN
 # ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! managers '.VirtualMedia."@odata.id"'
 /redfish/v1/Managers/1/VirtualMedia
 
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power
+On
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power abc
+abc is not valid command.
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power on
+{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageArgs":["Power is on"],"MessageId":"iLO.2.16.InvalidOperationForSystemState"}]}}400 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power off
+{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power restart
+{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
+
 ```
+

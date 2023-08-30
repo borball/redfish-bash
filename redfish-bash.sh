@@ -17,6 +17,8 @@ usage(){
   echo "  managers"
   echo "  bios"
   echo "  eths"
+  echo "  power"
+  echo "  power on|off|restart"
 }
 
 if [ $# -lt 3 ]
@@ -87,6 +89,34 @@ eths(){
   for ethernetInterface in $ethernetInterfaces; do
     curl -sku "${username_password}" "$bmc""$ethernetInterface" |jq '{Id,MACAddress,LinkStatus,Status}'
   done
+}
+
+power() {
+  local system=$(system)
+
+  if [ -z "$parameters" ]; then
+    curl -sku "${username_password}" "$system" |jq -r ".PowerState"
+  else
+    local reset_type
+    if [ "off" = "$parameters" ]; then
+      reset_type="ForceOff"
+    fi
+    if [ "on" = "$parameters" ]; then
+      reset_type="On"
+    fi
+    if [ "restart" = "$parameters" ]; then
+      reset_type="ForceRestart"
+    fi
+
+    if [ -n "$reset_type" ]; then
+      curl --globoff  -L -w "%{http_code} %{url_effective}\\n" -ku "${username_password}" \
+        -H "Content-Type: application/json" -H "Accept: application/json" \
+        -d "{\"ResetType\": \"${reset_type}\"}" \
+        -X POST "$system"/Actions/ComputerSystem.Reset
+    else
+      echo "$parameters is not valid command."
+    fi
+  fi
 }
 
 if [ -n "$cmd" ]; then
