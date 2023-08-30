@@ -11,8 +11,11 @@ usage(){
   echo "Example : $0 https://192.168.13.146 Administrator:superuser command"
   echo "available commands:"
   echo "  system"
+  echo "  systems"
   echo "  manager"
+  echo "  managers"
   echo "  bios"
+  echo "  eths"
 }
 
 if [ $# -lt 3 ]
@@ -56,7 +59,7 @@ bios(){
   curl -sku "${username_password}" "$system" |jq -r
 }
 
-nics(){
+eths(){
   local system=$(system)
   local ethernet_address=$(curl -sku "${username_password}" "$system" |jq -r '.EthernetInterfaces."@odata.id"')
   local ethernetInterfaces=$(curl -sku "${username_password}" "$bmc""$ethernet_address" |jq -r '.Members[]."@odata.id"')
