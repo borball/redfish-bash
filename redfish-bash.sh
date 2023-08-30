@@ -19,6 +19,9 @@ usage(){
   echo "  eths"
   echo "  power"
   echo "  power on|off|restart"
+  echo "  virtual-media"
+  echo "  virtual-media insert http://192.168.58.15/iso/agent-130.iso"
+  echo "  virtual-media eject"
 }
 
 if [ $# -lt 3 ]
@@ -118,6 +121,45 @@ power() {
     fi
   fi
 }
+
+virtual-media(){
+  local virtual_media_selected
+  local manager=$(manager)
+  local virtual_medias=$(curl -sku "${username_password}" "$manager"/"VirtualMedia" | jq -r '.Members[]."@odata.id"' )
+  for virtual_media in $virtual_medias; do
+    if [ $(curl -sku "${username_password}" "$bmc""$virtual_media" | jq '.MediaTypes[]' |grep -ciE 'CD|DVD') -gt 0 ]; then
+      virtual_media_selected=$virtual_media
+    fi
+  done
+
+  if [ -z "$parameters" ]; then
+    curl -s --globoff -H "Content-Type: application/json" -H "Accept: application/json" \
+      -k -X GET --user "${username_password}" \
+      "$bmc""$virtual_media_selected"| jq
+  else
+    local virtual_media_ops=($parameters)
+    local virtual_media_action="${virtual_media_ops[0]}"
+
+    if [ "insert" = "$virtual_media_action" ]; then
+      local iso_image="${virtual_media_ops[1]}"
+      if [ -z "$iso_image" ]; then
+        echo "Need to specify the ISO location."
+      else
+        curl --globoff -L -w "%{http_code} %{url_effective}\\n" -ku "${username_password}" \
+          -H "Content-Type: application/json" -H "Accept: application/json" \
+          -d "{\"Image\": \"${iso_image}\"}" \
+          -X POST "$bmc""$virtual_media_selected"/Actions/VirtualMedia.InsertMedia
+      fi
+    fi
+
+    if [ "eject" = "$virtual_media_action" ]; then
+      curl --globoff -L -w "%{http_code} %{url_effective}\\n"  -ku "${username_password}" \
+        -H "Content-Type: application/json" -H "Accept: application/json" \
+        -d '{}'  -X POST "$bmc""$virtual_media_selected"/Actions/VirtualMedia.EjectMedia
+    fi
+  fi
+}
+
 
 if [ -n "$cmd" ]; then
   $cmd

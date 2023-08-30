@@ -20,6 +20,9 @@ Available commands :
   eths
   power
   power on|off|restart
+  virtual-media
+  virtual-media insert http://192.168.58.15/iso/agent-130.iso
+  virtual-media eject
 ```
 
 ```shell
@@ -141,6 +144,58 @@ abc is not valid command.
 
 # ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! power restart
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
+
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! virtual-media insert http://192.168.58.15/iso/agent-130.iso
+{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.InsertMedia
+
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! virtual-media 
+{
+  "@odata.context": "/redfish/v1/$metadata#VirtualMedia.VirtualMedia",
+  "@odata.etag": "W/\"0D292F2F\"",
+  "@odata.id": "/redfish/v1/Managers/1/VirtualMedia/2",
+  "@odata.type": "#VirtualMedia.v1_3_0.VirtualMedia",
+  "Id": "2",
+  "Actions": {
+    "#VirtualMedia.EjectMedia": {
+      "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.EjectMedia"
+    },
+    "#VirtualMedia.InsertMedia": {
+      "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.InsertMedia"
+    }
+  },
+  "ConnectedVia": "URI",
+  "Description": "Virtual Removable Media",
+  "Image": "http://192.168.58.15/iso/agent-130.iso",
+  "ImageName": "agent-130.iso",
+  "Inserted": true,
+  "MediaTypes": [
+    "CD",
+    "DVD"
+  ],
+  "Name": "VirtualMedia",
+  "Oem": {
+    "Hpe": {
+      "@odata.context": "/redfish/v1/$metadata#HpeiLOVirtualMedia.HpeiLOVirtualMedia",
+      "@odata.type": "#HpeiLOVirtualMedia.v2_2_0.HpeiLOVirtualMedia",
+      "Actions": {
+        "#HpeiLOVirtualMedia.EjectVirtualMedia": {
+          "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/Oem/Hpe/HpeiLOVirtualMedia.EjectVirtualMedia"
+        },
+        "#HpeiLOVirtualMedia.InsertVirtualMedia": {
+          "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/Oem/Hpe/HpeiLOVirtualMedia.InsertVirtualMedia"
+        }
+      },
+      "BootOnNextServerReset": false
+    }
+  },
+  "TransferProtocolType": "HTTP",
+  "WriteProtected": true
+}
+
+# ./redfish-bash.sh https://192.168.14.130 Administrator:Redhat123! virtual-media eject
+{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.EjectMedia
 
 ```
 
