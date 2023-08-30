@@ -7,9 +7,9 @@ if ! type "yq" > /dev/null; then
 fi
 
 usage(){
-  echo "Usage : $0 bmc username:password command"
+  echo "Usage :   $0 bmc username:password command"
   echo "Example : $0 https://192.168.13.146 Administrator:superuser command"
-  echo "available commands:"
+  echo "Available commands : "
   echo "  system"
   echo "  systems"
   echo "  manager"
