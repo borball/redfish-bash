@@ -27,6 +27,7 @@ usage(){
   echo "  virtual-media"
   echo "  virtual-media insert http://192.168.58.15/iso/agent-130.iso"
   echo "  virtual-media eject"
+  echo "  boot-once-from-cd"
 }
 
 if [ $# -lt 1 ]
@@ -185,6 +186,13 @@ virtual-media(){
   fi
 }
 
+boot-once-from-cd() {
+    local system=$(system)
+    curl --globoff  -L -w "%{http_code} %{url_effective}\\n"  -ku ${username_password}  \
+    -H "Content-Type: application/json" -H "Accept: application/json" \
+    -d '{"Boot":{ "BootSourceOverrideEnabled": "Once", "BootSourceOverrideTarget": "Cd" }}' \
+    -X PATCH $system
+}
 
 if [ "login" = "$cmd" ]; then
   login
