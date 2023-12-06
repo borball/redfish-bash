@@ -1,6 +1,6 @@
 # redfish-bash
 
-A wrapper script of redfish API, tested on ZT/HPE/Dell servers.
+A wrapper script of redfish API, tested on ZT/HPE/Dell/Sushy-tools servers.
 
 ## Install
 
