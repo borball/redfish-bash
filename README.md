@@ -37,6 +37,8 @@ Available commands :
   virtual-media insert http://192.168.58.15/iso/agent-130.iso
   virtual-media eject
   boot-once-from-cd
+  secure-boot
+  secure-boot true|false
 ```
 
 ## Examples
