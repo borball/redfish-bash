@@ -219,8 +219,24 @@ boot-once-from-cd() {
 
 secure-boot(){
   local system=$(system)
-  local secure_boot="$bmc"$(curl -sku "${username_password}" "$system" |jq -r ".SecureBoot")
-  curl -sku "${username_password}" "$secure_boot" |jq -r ".SecureBootEnable"
+  local secure_boot="$bmc"$(curl -sku "${username_password}" "$system" |jq -r '.SecureBoot."@odata.id"')
+  local enabled=$(curl -sku "${username_password}" "$secure_boot" |jq -r ".SecureBootEnable")
+
+  if [ -z "$parameters" ]; then
+    echo "$enabled"
+  else
+    if [ $parameters = $enabled ]; then
+      echo "secure boot is already $parameters, no need to change."
+    else
+      if [ "true" = "$parameters" ] || [ "false" = "$parameters" ]; then
+        local body="{\"SecureBootEnable\":$parameters}"
+        curl -sku "${username_password}" -X PATCH -H "Content-Type: application/json" -d "$body" "$secure_boot"
+        echo "secure boot has been set as $parameters, you may need to reboot the node to take effect."
+      else
+        echo "$parameters is not supported, it should be true or false"
+      fi
+    fi
+  fi
 }
 
 if [ "login" = "$cmd" ]; then
