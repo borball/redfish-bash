@@ -227,5 +227,12 @@ abc is not valid command.
 # redfish-bash.sh virtual-media eject
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.EjectMedia
 
+## check current secure-boot setting
+$ redfish-bash.sh secure-boot 
+false
+
+## disable secure-boot
+$ redfish-bash.sh secure-boot false
+secure boot has been set as false, you may need to reboot the node to take effect.
 ```
 
