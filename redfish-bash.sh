@@ -210,11 +210,17 @@ virtual-media(){
 }
 
 boot-once-from-cd() {
-    local system=$(system)
-    curl --globoff  -L -w "%{http_code} %{url_effective}\\n"  -ku ${username_password}  \
-    -H "Content-Type: application/json" -H "Accept: application/json" \
-    -d '{"Boot":{ "BootSourceOverrideEnabled": "Once", "BootSourceOverrideTarget": "Cd" }}' \
-    -X PATCH $system
+  local system=$(system)
+  curl --globoff  -L -w "%{http_code} %{url_effective}\\n"  -ku ${username_password}  \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -d '{"Boot":{ "BootSourceOverrideEnabled": "Once", "BootSourceOverrideTarget": "Cd" }}' \
+  -X PATCH $system
+}
+
+secure-boot(){
+  local system=$(system)
+  local secure_boot="$bmc"$(curl -sku "${username_password}" "$system" |jq -r ".SecureBoot")
+  curl -sku "${username_password}" "$secure_boot" |jq -r ".SecureBootEnable"
 }
 
 if [ "login" = "$cmd" ]; then
