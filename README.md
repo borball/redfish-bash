@@ -19,6 +19,7 @@ redfish-bash.sh
 # redfish-bash.sh 
 Usage :   redfish-bash.sh command
 Example : redfish-bash.sh login https://192.168.13.146 Administrator:superuser
+Example : redfish-bash.sh login https://192.168.58.15:8080 a:b 22222222-1111-1111-0000-000000000010
 Example : redfish-bash.sh managers
 Example : redfish-bash.sh bios '.Attributes.WorkloadProfile'
 Run : redfish-bash.sh login before using other commands
@@ -44,6 +45,10 @@ Available commands :
 ## login
 # redfish-bash.sh login https://192.168.13.146 Administrator:superuser
 login succeed, will use /root/.bmc.cfg next time.
+
+## login to the BMC console simulated by sushy-tools:
+# redfish-bash.sh login https://192.168.58.15:8080 a:b 22222222-1111-1111-0000-000000000010
+login succeed, will use /usr/local/bin/.bmc.cfg next time.
 
 ## ZT
 # redfish-bash.sh manager

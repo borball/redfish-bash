@@ -11,11 +11,13 @@ BASEDIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 usage(){
   echo "Usage :   $0 command"
   echo "Example : $0 login https://192.168.13.146 Administrator:superuser"
+  echo "Example : $0 login https://192.168.13.146 Administrator:superuser [kvm_uuid]"
   echo "Example : $0 managers"
   echo "Example : $0 bios '.Attributes.WorkloadProfile'"
   echo "Run : $0 login before using other commands"
   echo "Available commands : "
   echo "  login [bmc] [username:password]"
+  echo "  login [bmc] [username:password] [kvm_uuid]"
   echo "  system"
   echo "  systems"
   echo "  manager"
@@ -50,27 +52,43 @@ fi
 
 login(){
   local bmc_info=($parameters)
-  if [ "${#bmc_info[@]}" = 2 ]; then
+
+  if [ "${#bmc_info[@]}" -gt 1 ]; then
     local bmc="${bmc_info[0]}"
     local username_password="${bmc_info[1]}"
 
-    if [ $(curl -ku "$username_password" -s -o /dev/null -w ''%{http_code}'' "$bmc"/redfish/v1) -eq 200 ]; then
+    local redfish_url="$bmc"/redfish/v1
+    if [ "${#bmc_info[@]}" = 3 ]; then
+      uuid="${bmc_info[2]}"
+      redfish_url="$redfish_url/Systems/$uuid"
+    fi
+
+    if [ $(curl -ku "$username_password" -s -o /dev/null -w ''%{http_code}'' "$redfish_url") -eq 200 ]; then
       echo "login succeed, will use $BASEDIR/.bmc.cfg next time."
       echo "bmc=$bmc" > "$BASEDIR"/.bmc.cfg
       echo "username_password=$username_password" >> "$BASEDIR"/.bmc.cfg
+      if [ -n "$uuid" ]; then
+        echo "uuid=$uuid" >> "$BASEDIR"/.bmc.cfg
+      fi
     else
       echo "login failed, please check."
       exit 1
     fi
+
   else
-    echo "command invalid, please try login [bmc] [username:password]"
+    echo "command invalid, please try redfish-bash.sh login [bmc] [username:password] or: redfish-bash.sh login [bmc] [username:password] [kvm_uuid]"
     exit 1
   fi
 
 }
 
 system(){
-  local system=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Systems | jq -r '.Members[0]."@odata.id"' )
+  if [ -z "$uuid" ]; then
+    local system=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Systems | jq -r '.Members[0]."@odata.id"' )
+  else
+    local system=/redfish/v1/Systems/"$uuid"
+  fi
+
   echo "$bmc""$system"
 }
 
@@ -86,7 +104,12 @@ systems(){
 }
 
 manager(){
-  local manager=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Managers | jq -r '.Members[0]."@odata.id"' )
+  if [ -z "$uuid" ]; then
+    local manager=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Managers | jq -r '.Members[0]."@odata.id"' )
+  else
+    local manager=/redfish/v1/Managers/"$uuid"
+  fi
+
   echo "$bmc""$manager"
 }
 
