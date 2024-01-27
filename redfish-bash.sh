@@ -30,6 +30,8 @@ usage(){
   echo "  virtual-media insert http://192.168.58.15/iso/agent-130.iso"
   echo "  virtual-media eject"
   echo "  boot-once-from-cd"
+  echo "  secure-boot"
+  echo "  secure-boot true|false"
 }
 
 if [ $# -lt 1 ]
