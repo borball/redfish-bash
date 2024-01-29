@@ -30,6 +30,7 @@ Available commands :
   manager
   managers
   bios
+  bios-attr k v
   eths
   power
   power on|off|restart
@@ -157,6 +158,9 @@ https://192.168.18.162/redfish/v1/Systems/System.Embedded.1
 
 # redfish-bash.sh bios ".Attributes.WorkloadProfile"
 vRAN
+
+# redfish-bash.sh bios-attr EnergyPerformancePreference Enabled
+{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"iLO.2.14.SystemResetRequired"}]}}200 https://192.168.14.132/redfish/v1/systems/1/bios/settings/
 
 # redfish-bash.sh managers '.VirtualMedia."@odata.id"'
 /redfish/v1/Managers/1/VirtualMedia

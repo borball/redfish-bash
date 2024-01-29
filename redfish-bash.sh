@@ -23,6 +23,7 @@ usage(){
   echo "  manager"
   echo "  managers"
   echo "  bios"
+  echo "  bios-attr k v"
   echo "  eths"
   echo "  power"
   echo "  power on|off|restart"
@@ -133,6 +134,25 @@ bios(){
     curl -sku "${username_password}" "$bmc""$bios" |jq -r "$parameters"
   else
     curl -sku "${username_password}" "$bmc""$bios" |jq
+  fi
+}
+
+bios-attr(){
+  if [ -n "$parameters" ]; then
+    local system=$(system)
+    local bios=$(curl -sku "${username_password}" "$system"|jq -r '.Bios."@odata.id"')
+    local settings=$(curl -sku "${username_password}" "$bmc""$bios" |jq -r ".\"@Redfish.Settings\".SettingsObject.\"@odata.id\"")
+    local k_v=($parameters)
+    local key=${k_v[0]}
+    local value=${k_v[1]}
+
+    curl --globoff  -L -w "%{http_code} %{url_effective}\\n"  -ku ${username_password}  \
+    -H "Content-Type: application/json" -H "Accept: application/json" \
+    -d "{\"Attributes\":{\"$key\": \"$value\"}}" \
+    -X PATCH "$bmc""$settings"
+
+  else
+    echo "Usage: $0 key value"
   fi
 }
 
