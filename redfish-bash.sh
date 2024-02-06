@@ -33,6 +33,8 @@ usage(){
   echo "  boot-once-from-cd"
   echo "  secure-boot"
   echo "  secure-boot true|false"
+  echo "  storage"
+
 }
 
 if [ $# -lt 1 ]
@@ -258,6 +260,16 @@ secure-boot(){
         echo "$parameters is not supported, it should be true or false"
       fi
     fi
+  fi
+}
+
+storage(){
+  local system=$(system)
+  local storage="$bmc"$(curl -sku "${username_password}" "$system" |jq -r '.Storage."@odata.id"')
+  if [ -n "$parameters" ]; then
+    curl -sku "${username_password}" "$storage"/"$parameters" |jq
+  else
+    curl -sku "${username_password}" "$storage" |jq
   fi
 }
 

@@ -40,6 +40,8 @@ Available commands :
   boot-once-from-cd
   secure-boot
   secure-boot true|false
+  storage
+  storage id
 ```
 
 ## Examples
@@ -240,5 +242,83 @@ false
 ## disable secure-boot
 $ redfish-bash.sh secure-boot false
 secure boot has been set as false, you may need to reboot the node to take effect.
-```
 
+## list storage
+$ redfish-bash.sh storage
+{
+  "@odata.context": "/redfish/v1/$metadata#StorageCollection.StorageCollection",
+  "@odata.etag": "W/\"570254F2\"",
+  "@odata.id": "/redfish/v1/Systems/1/Storage",
+  "@odata.type": "#StorageCollection.StorageCollection",
+  "Description": "Storage subsystems known to this system",
+  "Name": "Storage",
+  "Members": [
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000"
+    },
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000001"
+    }
+  ],
+  "Members@odata.count": 2
+}
+
+## list storage
+$ redfish-bash.sh storage DA000000
+redfish-bash.sh storage DA000000
+{
+  "@odata.context": "/redfish/v1/$metadata#Storage.Storage",
+  "@odata.etag": "W/\"836C2E84\"",
+  "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000",
+  "@odata.type": "#Storage.v1_12_0.Storage",
+  "Id": "DA000000",
+  "Controllers": {
+    "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000/Controllers"
+  },
+  "Drives": [
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000/Drives/DA000000/"
+    }
+  ],
+  "Links": {
+    "Enclosures": [
+      {
+        "@odata.id": "/redfish/v1/Chassis/1"
+      }
+    ]
+  },
+  "Name": "NVMe Storage System",
+  "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+  },
+  "StorageControllers": [
+    {
+      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000#/StorageControllers/0/",
+      "FirmwareVersion": "EDA7602Q",
+      "Identifiers": [],
+      "Location": {
+        "PartLocation": {
+          "LocationOrdinalValue": 10,
+          "LocationType": "Slot",
+          "ServiceLabel": "Slot 10"
+        }
+      },
+      "MemberId": "0",
+      "Model": "SAMSUNG MZ1LB1T9HALS-00007",
+      "Name": "NVMe Storage Controller",
+      "SerialNumber": "S436NA0R757299",
+      "Status": {
+        "Health": "OK",
+        "State": "Enabled"
+      },
+      "SupportedControllerProtocols": [
+        "PCIe"
+      ],
+      "SupportedDeviceProtocols": [
+        "NVMe"
+      ]
+    }
+  ]
+}
+```
