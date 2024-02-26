@@ -121,7 +121,8 @@ manager(){
 }
 
 reset(){
-  local reset=$(manager ".Actions.\"#Manager.Reset\".target")
+  local manager=$(manager)
+  local reset=$(curl -sku "${username_password}" "$manager" |jq -r ".Actions.\"#Manager.Reset\".target")
   local reset_type="ForceRestart"
   curl --globoff  -L -w "%{http_code} %{url_effective}\\n" -ku "${username_password}" \
   -H "Content-Type: application/json" -H "Accept: application/json" \
