@@ -29,6 +29,8 @@ Available commands :
   systems
   manager
   managers
+  #BMC reset
+  reset
   bios
   bios-attr k v
   eths

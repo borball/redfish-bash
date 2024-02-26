@@ -22,6 +22,8 @@ usage(){
   echo "  systems"
   echo "  manager"
   echo "  managers"
+  echo "  #BMC reset"
+  echo "  reset"
   echo "  bios"
   echo "  bios-attr k v"
   echo "  eths"
@@ -116,6 +118,15 @@ manager(){
   fi
 
   echo "$bmc""$manager"
+}
+
+reset(){
+  local reset=$(manager ".Actions.\"#Manager.Reset\".target")
+  local reset_type="ForceRestart"
+  curl --globoff  -L -w "%{http_code} %{url_effective}\\n" -ku "${username_password}" \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -d "{\"ResetType\": \"${reset_type}\"}" \
+  -X POST "$bmc""$reset"
 }
 
 managers(){
