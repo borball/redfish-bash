@@ -89,6 +89,16 @@ login(){
 
 }
 
+#list all bmc servers saved in the config
+list(){
+  echo "'list' command not yet implemented"
+}
+
+#choose one of the bmc servers from the server list
+use(){
+  echo "'use' command not yet implemented"
+}
+
 system(){
   if [ -z "$uuid" ]; then
     local system=$(curl -sku "${username_password}" "$bmc"/redfish/v1/Systems | jq -r '.Members[0]."@odata.id"' )
