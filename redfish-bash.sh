@@ -359,7 +359,7 @@ elif [ "server" = "$cmd" ]; then
   fi
 else
   server
-  echo "$cmd output:"
+  echo "$cmd $parameters output:"
   $cmd
 fi
 
