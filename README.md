@@ -20,11 +20,27 @@ redfish-bash.sh
 Usage :   redfish-bash.sh command
 Example : redfish-bash.sh login https://192.168.13.146 Administrator:superuser
 Example : redfish-bash.sh login https://192.168.58.15:8080 a:b 22222222-1111-1111-0000-000000000010
+Example : redfish-bash.sh servers
+Example : redfish-bash.sh server
+Example : redfish-bash.sh server 1
 Example : redfish-bash.sh managers
 Example : redfish-bash.sh bios '.Attributes.WorkloadProfile'
-Run : redfish-bash.sh login before using other commands
+Run : redfish-bash.sh login or redfish-bash.sh server before using other commands.
 Available commands : 
+  -------------------------------------------
+  #login BMC
   login [bmc] [username:password]
+  login [bmc] [username:password] [kvm_uuid]
+  -------------------------------------------
+  #bmc server context
+  #all servers:
+  servers
+  #current server
+  server
+  #use server N
+  server N
+  -------------------------------------------
+  #resource management
   system
   systems
   manager
@@ -43,7 +59,7 @@ Available commands :
   secure-boot
   secure-boot true|false
   storage
-  storage id
+
 ```
 
 ## Examples
@@ -51,11 +67,51 @@ Available commands :
 ```shell
 ## login
 # redfish-bash.sh login https://192.168.13.146 Administrator:superuser
-login succeed, will use /root/.bmc.cfg next time.
+login successful, will use this server for the following commands.
+index: 0
+bmc: https://192.168.13.145
+userPass: Administrator:superuser
 
 ## login to the BMC console simulated by sushy-tools:
 # redfish-bash.sh login https://192.168.58.15:8080 a:b 22222222-1111-1111-0000-000000000010
-login succeed, will use /usr/local/bin/.bmc.cfg next time.
+login successful, will use this server for the following commands.
+index: 2
+bmc: https://192.168.58.15:8080
+userPass: dummy:dummy
+
+## servers
+# redfish-bash.sh servers
+following server is being used:
+
+
+All servers in the list:
+0   https://192.168.58.15:8080
+1   https://192.168.13.146
+2   https://192.168.13.147
+3   https://192.168.13.148
+4   https://192.168.13.149
+5   https://192.168.14.130
+6   https://192.168.14.131
+7   https://192.168.14.132
+8   https://192.168.14.133
+use command 'server' to check the current server
+use command 'server N' to switch the servers
+
+# server
+# redfish-bash.sh server 
+following server is being used:
+
+# redfish-bash.sh server 1
+following server will be used:
+index: 1
+bmc: https://192.168.13.146
+userPass: Administrator:superuser
+
+# redfish-bash.sh server 
+following server is being used:
+index: 1
+bmc: https://192.168.13.146
+userPass: Administrator:superuser
 
 ## ZT
 # redfish-bash.sh manager

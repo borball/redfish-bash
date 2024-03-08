@@ -7,6 +7,8 @@ if ! type "yq" > /dev/null; then
 fi
 
 BASEDIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+ALL_SERVERS_CFG="$BASEDIR/.bmc-all.yaml"
+CURRENT_SERVERS_CFG="$BASEDIR/.bmc-current.yaml"
 
 usage(){
   echo "Usage :   $0 command"
@@ -16,8 +18,20 @@ usage(){
   echo "Example : $0 bios '.Attributes.WorkloadProfile'"
   echo "Run : $0 login before using other commands"
   echo "Available commands : "
+  echo "  -------------------------------------------"
+  echo "  #login BMC"
   echo "  login [bmc] [username:password]"
   echo "  login [bmc] [username:password] [kvm_uuid]"
+  echo "  -------------------------------------------"
+  echo "  #bmc server context"
+  echo "  #all servers:"
+  echo "  servers"
+  echo "  #current server"
+  echo "  server"
+  echo "  #use server N"
+  echo "  server N"
+  echo "  -------------------------------------------"
+  echo "  #resource management"
   echo "  system"
   echo "  systems"
   echo "  manager"
@@ -57,6 +71,21 @@ if [ $# -gt 1 ]; then
   parameters=${@:2}
 fi
 
+_save_cfg(){
+  local total=$(yq ".|length" "$ALL_SERVERS_CFG")
+  echo "- index: $total" >> "$ALL_SERVERS_CFG"
+  echo "  bmc: $1" >> "$ALL_SERVERS_CFG"
+  echo "  userPass: $2" >> "$ALL_SERVERS_CFG"
+
+  echo "index: $total" > "$CURRENT_SERVERS_CFG"
+  echo "bmc: $1" >> "$CURRENT_SERVERS_CFG"
+  echo "userPass: $2" >> "$CURRENT_SERVERS_CFG"
+
+  yq "$CURRENT_SERVERS_CFG"
+  export bmc=$(yq ".bmc" "$CURRENT_SERVERS_CFG")
+  export username_password=$(yq ".userPass" "$CURRENT_SERVERS_CFG")
+}
+
 login(){
   local bmc_info=($parameters)
 
@@ -71,12 +100,9 @@ login(){
     fi
 
     if [ $(curl -ku "$username_password" -s -o /dev/null -w ''%{http_code}'' "$redfish_url") -eq 200 ]; then
-      echo "login succeed, will use $BASEDIR/.bmc.cfg next time."
-      echo "bmc=$bmc" > "$BASEDIR"/.bmc.cfg
-      echo "username_password=$username_password" >> "$BASEDIR"/.bmc.cfg
-      if [ -n "$uuid" ]; then
-        echo "uuid=$uuid" >> "$BASEDIR"/.bmc.cfg
-      fi
+      #login succeed
+      echo "login successful, will use this server for the following commands."
+      _save_cfg "$bmc" "$username_password"
     else
       echo "login failed, please check."
       exit 1
@@ -90,13 +116,36 @@ login(){
 }
 
 #list all bmc servers saved in the config
-list(){
-  echo "'list' command not yet implemented"
+servers(){
+  echo
+  echo "All servers in the list:"
+  yq '.[]|(.index + "   "  + .bmc)' "$ALL_SERVERS_CFG"
+
+  echo "use command 'server' to check the current server"
+  echo "use command 'server N' to switch the servers"
 }
 
 #choose one of the bmc servers from the server list
-use(){
-  echo "'use' command not yet implemented"
+server(){
+  if [ -n "$parameters" ]; then
+    re='^[0-9]+$'
+    if ! [[ $parameters =~ $re ]] ; then
+      echo "error: $parameters not a number" >&2; exit 1
+    fi
+    if [[ $(yq ".[$parameters]" "$ALL_SERVERS_CFG") != "null" ]]; then
+      echo "following server will be used:"
+      yq ".[$parameters]" "$ALL_SERVERS_CFG"
+      yq ".[$parameters]" "$ALL_SERVERS_CFG" > "$CURRENT_SERVERS_CFG"
+    else
+      echo "server with index $parameters not found"
+    fi
+  else
+    echo "following server is being used:"
+    yq "$CURRENT_SERVERS_CFG"
+  fi
+
+  export bmc=$(yq ".bmc" "$CURRENT_SERVERS_CFG")
+  export username_password=$(yq ".userPass" "$CURRENT_SERVERS_CFG")
 }
 
 system(){
@@ -297,12 +346,9 @@ storage(){
 
 if [ "login" = "$cmd" ]; then
   login
+elif [ "server" = "$cmd" ]; then
+  server
 else
-  if [ -f "$BASEDIR"/.bmc.cfg ]; then
-    source "$BASEDIR"/.bmc.cfg
-    $cmd
-  else
-    echo "Run login before using other commands."
-    exit 1
-  fi
+  server
+  $cmd
 fi
