@@ -4,6 +4,8 @@ A wrapper script of redfish API, tested on ZT/HPE/Dell/Sushy-tools servers.
 
 ## Install
 
+- Note: Install yq with instruction: https://github.com/mikefarah/yq?tab=readme-ov-file#install
+
 ```shell
 curl -fsSL -o /usr/local/bin/redfish-bash.sh https://raw.githubusercontent.com/borball/redfish-bash/master/redfish-bash.sh
 chmod +x /usr/local/bin/redfish-bash.sh
