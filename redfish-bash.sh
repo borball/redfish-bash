@@ -9,6 +9,7 @@ fi
 BASEDIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 ALL_SERVERS_CFG="$BASEDIR/.bmc-all.yaml"
 CURRENT_SERVERS_CFG="$BASEDIR/.bmc-current.yaml"
+touch "$ALL_SERVERS_CFG"
 
 usage(){
   echo "Usage :   $0 command <parameters>"
@@ -128,6 +129,7 @@ server(){
 
   export bmc=$(yq ".bmc" "$CURRENT_SERVERS_CFG")
   export username_password=$(yq ".userPass" "$CURRENT_SERVERS_CFG")
+  echo
 }
 
 system(){
@@ -347,9 +349,15 @@ fi
 if [ "login" = "$cmd" ]; then
   login
 elif [ "server" = "$cmd" ]; then
-  server
+  if [[ -f "$CURRENT_SERVERS_CFG" ]]; then
+    server
+  else
+    echo "No server found in the configuration, please at lease use command 'login' once."
+    exit 1
+  fi
 else
   server
+  echo "$cmd output:"
   $cmd
 fi
 
