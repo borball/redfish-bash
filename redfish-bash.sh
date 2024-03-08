@@ -104,6 +104,7 @@ servers(){
   echo "All servers in the list:"
   yq '.[]|(.index + "   "  + .bmc)' "$ALL_SERVERS_CFG"
 
+  echo
   echo "use command 'server' to check the current server"
   echo "use command 'server N' to switch the servers"
 }
