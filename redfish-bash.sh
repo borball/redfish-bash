@@ -11,7 +11,7 @@ ALL_SERVERS_CFG="$BASEDIR/.bmc-all.yaml"
 CURRENT_SERVERS_CFG="$BASEDIR/.bmc-current.yaml"
 
 usage(){
-  echo "Usage :   $0 command"
+  echo "Usage :   $0 command <parameters>"
   echo "Example : $0 login https://192.168.13.146 Administrator:superuser"
   echo "Example : $0 login https://192.168.13.146 Administrator:superuser [kvm_uuid]"
   echo "Example : $0 managers"
