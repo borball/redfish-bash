@@ -111,17 +111,18 @@ servers(){
 
 #choose one of the bmc servers from the server list
 server(){
-  if [ -n "$parameters" ]; then
+  local index=$1
+  if [ -n "$index" ]; then
     re='^[0-9]+$'
-    if ! [[ $parameters =~ $re ]] ; then
-      echo "error: $parameters not a number" >&2; exit 1
+    if ! [[ $index =~ $re ]] ; then
+      echo "error: $index not a number" >&2; exit 1
     fi
-    if [[ $(yq ".[$parameters]" "$ALL_SERVERS_CFG") != "null" ]]; then
+    if [[ $(yq ".[$index]" "$ALL_SERVERS_CFG") != "null" ]]; then
       echo "following server will be used:"
-      yq ".[$parameters]" "$ALL_SERVERS_CFG"
-      yq ".[$parameters]" "$ALL_SERVERS_CFG" > "$CURRENT_SERVERS_CFG"
+      yq ".[$index]" "$ALL_SERVERS_CFG"
+      yq ".[$index]" "$ALL_SERVERS_CFG" > "$CURRENT_SERVERS_CFG"
     else
-      echo "server with index $parameters not found"
+      echo "server with index $index not found"
     fi
   else
     echo "following server is being used:"
@@ -351,7 +352,7 @@ if [ "login" = "$cmd" ]; then
   login
 elif [ "server" = "$cmd" ]; then
   if [[ -f "$CURRENT_SERVERS_CFG" ]]; then
-    server
+    server $parameters
   else
     echo "No server found in the configuration, please at lease use command 'login' once."
     exit 1
