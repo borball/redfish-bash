@@ -53,24 +53,6 @@ usage(){
 
 }
 
-if [ $# -lt 1 ]
-then
-  usage
-  exit
-fi
-
-if [[ ( $@ == "--help") ||  $@ == "-h" ]]
-then
-  usage
-  exit
-fi
-
-cmd=$1
-
-if [ $# -gt 1 ]; then
-  parameters=${@:2}
-fi
-
 _save_cfg(){
   local total=$(yq ".|length" "$ALL_SERVERS_CFG")
   echo "- index: $total" >> "$ALL_SERVERS_CFG"
@@ -344,6 +326,24 @@ storage(){
   fi
 }
 
+if [ $# -lt 1 ]
+then
+  usage
+  exit
+fi
+
+if [[ ( $@ == "--help") ||  $@ == "-h" ]]
+then
+  usage
+  exit
+fi
+
+cmd=$1
+
+if [ $# -gt 1 ]; then
+  parameters=${@:2}
+fi
+
 if [ "login" = "$cmd" ]; then
   login
 elif [ "server" = "$cmd" ]; then
@@ -352,3 +352,4 @@ else
   server
   $cmd
 fi
+
