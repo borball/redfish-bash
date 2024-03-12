@@ -350,16 +350,18 @@ fi
 
 if [ "login" = "$cmd" ]; then
   login
-elif [ "server" = "$cmd" ]; then
-  if [[ -f "$CURRENT_SERVERS_CFG" ]]; then
-    server $parameters
-  else
+else
+  if [[ ! -f "$CURRENT_SERVERS_CFG" ]]; then
     echo "No server found in the configuration, please at lease use command 'login' once."
     exit 1
   fi
-else
-  server
-  echo "$cmd $parameters output:"
-  $cmd
+
+  if [ "server" = "$cmd" ]; then
+    server $parameters
+  else
+    server
+    echo "$cmd $parameters output:"
+    $cmd
+  fi
 fi
 
