@@ -5,6 +5,7 @@ A wrapper script of redfish API, tested on ZT/HPE/Dell/Sushy-tools servers.
 ## Install
 
 - Note: Install yq with instruction: https://github.com/mikefarah/yq?tab=readme-ov-file#install
+- Note: Install jq(1.7+) with instruction: https://github.com/jqlang/jq?tab=readme-ov-file#installation
 
 ```shell
 curl -fsSL -o /usr/local/bin/redfish-bash.sh https://raw.githubusercontent.com/borball/redfish-bash/master/redfish-bash.sh
@@ -19,16 +20,8 @@ redfish-bash.sh
 
 ```shell
 # redfish-bash.sh 
-Usage :   redfish-bash.sh command
-Example : redfish-bash.sh login https://192.168.13.146 Administrator:superuser
-Example : redfish-bash.sh login https://192.168.58.15:8080 a:b 22222222-1111-1111-0000-000000000010
-Example : redfish-bash.sh servers
-Example : redfish-bash.sh server
-Example : redfish-bash.sh server 1
-Example : redfish-bash.sh managers
-Example : redfish-bash.sh bios '.Attributes.WorkloadProfile'
-Run : redfish-bash.sh login or redfish-bash.sh server before using other commands.
-Available commands : 
+Usage :   ./redfish-bash.sh command <parameters>
+Available commands:
   -------------------------------------------
   #login BMC
   login [bmc] [username:password]
@@ -44,34 +37,64 @@ Available commands :
   -------------------------------------------
   #resource management
   system
-  systems
+  system <jsonpath>
   manager
-  managers
-  #BMC reset
-  reset
+  manager <jsonpath>
+  #BMC reboot
+  bmc-reboot
   bios
-  bios-attr k v
+  #read attributes
+  bios <jsonpath>
+  #modify attribute
+  bios <attribute=value>
   eths
   power
   power on|off|restart
   virtual-media
-  virtual-media insert http://192.168.58.15/iso/agent-130.iso
+  virtual-media insert <url>>
   virtual-media eject
   boot-once-from-cd
   secure-boot
   secure-boot true|false
   storage
+  storage <ID>
+
+Examples:
+  ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser
+  ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser [kvm_uuid]
+  ./redfish-bash.sh servers
+  ./redfish-bash.sh server
+  ./redfish-bash.sh server 0
+  ./redfish-bash.sh system
+  ./redfish-bash.sh system Manufacturer,Model
+  ./redfish-bash.sh bios
+  ./redfish-bash.sh bios Attributes.WorkloadProfile
+  ./redfish-bash.sh bios WorkloadProfile=vRAN
+  ./redfish-bash.sh eths
+  ./redfish-bash.sh power
+  ./redfish-bash.sh power on|off|restart
+  ./redfish-bash.sh virtual-media
+  ./redfish-bash.sh virtual-media insert http://192.168.58.15/iso/agent-130.iso
+  ./redfish-bash.sh virtual-media eject
+  ./redfish-bash.sh boot-once-from-cd
+  ./redfish-bash.sh secure-boot
+  ./redfish-bash.sh secure-boot true|false
+  ./redfish-bash.sh storage
+  ./redfish-bash.sh storage DA000000
+Run : ./redfish-bash.sh login before using other commands for the first time.
 
 ```
 
 ## Examples
+
+### login
 
 ```shell
 ## login
 # redfish-bash.sh login https://192.168.13.146 Administrator:superuser
 login successful, will use this server for the following commands.
 index: 0
-bmc: https://192.168.13.145
+bmc: https://192.168.13.146
 userPass: Administrator:superuser
 
 ## login to the BMC console simulated by sushy-tools:
@@ -80,7 +103,12 @@ login successful, will use this server for the following commands.
 index: 2
 bmc: https://192.168.58.15:8080
 userPass: dummy:dummy
+```
 
+### servers
+Check all servers managed by redfish-bash:
+
+```
 ## servers
 # redfish-bash.sh servers
 following server is being used:
@@ -99,286 +127,296 @@ All servers in the list:
 use command 'server' to check the current server
 use command 'server N' to switch the servers
 
+```
+Check current server managed by redfish-bash:
+```
 # server
 # redfish-bash.sh server 
 following server is being used:
 
+```
+Switch to other server:
+```
 # redfish-bash.sh server 1
 following server will be used:
 index: 1
 bmc: https://192.168.13.146
 userPass: Administrator:superuser
+```
 
-# redfish-bash.sh server 
-following server is being used:
-index: 1
-bmc: https://192.168.13.146
-userPass: Administrator:superuser
+### manager
 
+Check all manager information on ZT:
+```
 ## ZT
 # redfish-bash.sh manager
-https://192.168.13.146/redfish/v1/Managers/Self
-## HPE
-# redfish-bash.sh  manager
-https://192.168.14.130/redfish/v1/Managers/1
-## Dell
-$ redfish-bash.sh manager
-https://192.168.18.162/redfish/v1/Managers/iDRAC.Embedded.1
-
-## ZT
-# redfish-bash.sh system
-https://192.168.13.146/redfish/v1/Systems/Self
-## HPE
-# redfish-bash.sh system
-https://192.168.14.130/redfish/v1/Systems/1
-## Dell
-$ redfish-bash.sh system
-https://192.168.18.162/redfish/v1/Systems/System.Embedded.1
-
-# redfish-bash.sh eths
 {
-  "Id": "EthernetInterface0",
-  "MACAddress": "B4:96:91:B4:8A:E8",
-  "LinkStatus": "LinkUp",
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  }
-}
-{
-  "Id": "EthernetInterface1",
-  "MACAddress": "B4:96:91:B4:8A:E9",
-  "LinkStatus": "LinkUp",
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  }
-}
-{
-  "Id": "EthernetInterface2",
-  "MACAddress": "B4:96:91:B4:8A:EA",
-  "LinkStatus": "LinkDown",
-  "Status": {
-    "Health": "OK",
-    "State": "Disabled"
-  }
-}
-{
-  "Id": "EthernetInterface3",
-  "MACAddress": "B4:96:91:B4:8A:EB",
-  "LinkStatus": "LinkDown",
-  "Status": {
-    "Health": "OK",
-    "State": "Disabled"
-  }
-}
-{
-  "Id": "EthernetInterface4",
-  "MACAddress": "B4:96:91:B4:86:C4",
-  "LinkStatus": "LinkUp",
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  }
-}
-{
-  "Id": "EthernetInterface5",
-  "MACAddress": "B4:96:91:B4:86:C5",
-  "LinkStatus": "LinkUp",
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  }
-}
-{
-  "Id": "EthernetInterface6",
-  "MACAddress": "B4:96:91:B4:86:C6",
-  "LinkStatus": "LinkDown",
-  "Status": {
-    "Health": "OK",
-    "State": "Disabled"
-  }
-}
-{
-  "Id": "EthernetInterface7",
-  "MACAddress": "B4:96:91:B4:86:C7",
-  "LinkStatus": "LinkDown",
-  "Status": {
-    "Health": "OK",
-    "State": "Disabled"
-  }
-}
-{
-  "Id": "VirtualEthernetInterface8",
-  "MACAddress": "AE:CD:C9:44:5C:35",
-  "LinkStatus": "LinkUp",
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  }
-}
-
-# redfish-bash.sh bios ".Attributes.WorkloadProfile"
-vRAN
-
-# redfish-bash.sh bios-attr EnergyPerformancePreference Enabled
-{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"iLO.2.14.SystemResetRequired"}]}}200 https://192.168.14.132/redfish/v1/systems/1/bios/settings/
-
-# redfish-bash.sh managers '.VirtualMedia."@odata.id"'
-/redfish/v1/Managers/1/VirtualMedia
-
-
-# redfish-bash.sh power
-On
-
-# redfish-bash.sh power abc
-abc is not valid command.
-
-# redfish-bash.sh power on
-{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageArgs":["Power is on"],"MessageId":"iLO.2.16.InvalidOperationForSystemState"}]}}400 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-
-# redfish-bash.sh power off
-{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-
-# redfish-bash.sh power restart
-{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-
-
-# redfish-bash.sh virtual-media insert http://192.168.58.15/iso/agent-130.iso
-{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.InsertMedia
-
-
-# redfish-bash.sh virtual-media 
-{
-  "@odata.context": "/redfish/v1/$metadata#VirtualMedia.VirtualMedia",
-  "@odata.etag": "W/\"0D292F2F\"",
-  "@odata.id": "/redfish/v1/Managers/1/VirtualMedia/2",
-  "@odata.type": "#VirtualMedia.v1_3_0.VirtualMedia",
-  "Id": "2",
+  "@Redfish.Settings": {
+    "@odata.type": "#Settings.v1_2_2.Settings",
+    "SettingsObject": {
+      "@odata.id": "/redfish/v1/Systems/Self/Bios/SD"
+    }
+  },
+  "@odata.context": "/redfish/v1/$metadata#Bios.Bios",
+  "@odata.etag": "\"1708975059\"",
+  "@odata.id": "/redfish/v1/Systems/Self/Bios",
+  "@odata.type": "#Bios.v1_1_0.Bios",
   "Actions": {
-    "#VirtualMedia.EjectMedia": {
-      "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.EjectMedia"
+    "#Bios.ChangePassword": {
+      "@Redfish.ActionInfo": "/redfish/v1/Systems/Self/Bios/ChangePasswordActionInfo",
+      "target": "/redfish/v1/Systems/Self/Bios/Actions/Bios.ChangePassword"
     },
-    "#VirtualMedia.InsertMedia": {
-      "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.InsertMedia"
-    }
-  },
-  "ConnectedVia": "URI",
-  "Description": "Virtual Removable Media",
-  "Image": "http://192.168.58.15/iso/agent-130.iso",
-  "ImageName": "agent-130.iso",
-  "Inserted": true,
-  "MediaTypes": [
-    "CD",
-    "DVD"
-  ],
-  "Name": "VirtualMedia",
-  "Oem": {
-    "Hpe": {
-      "@odata.context": "/redfish/v1/$metadata#HpeiLOVirtualMedia.HpeiLOVirtualMedia",
-      "@odata.type": "#HpeiLOVirtualMedia.v2_2_0.HpeiLOVirtualMedia",
-      "Actions": {
-        "#HpeiLOVirtualMedia.EjectVirtualMedia": {
-          "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/Oem/Hpe/HpeiLOVirtualMedia.EjectVirtualMedia"
-        },
-        "#HpeiLOVirtualMedia.InsertVirtualMedia": {
-          "target": "/redfish/v1/Managers/1/VirtualMedia/2/Actions/Oem/Hpe/HpeiLOVirtualMedia.InsertVirtualMedia"
-        }
-      },
-      "BootOnNextServerReset": false
-    }
-  },
-  "TransferProtocolType": "HTTP",
-  "WriteProtected": true
-}
-
-# redfish-bash.sh virtual-media eject
-{"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.EjectMedia
-
-## check current secure-boot setting
-$ redfish-bash.sh secure-boot 
-false
-
-## disable secure-boot
-$ redfish-bash.sh secure-boot false
-secure boot has been set as false, you may need to reboot the node to take effect.
-
-## list storage
-$ redfish-bash.sh storage
-{
-  "@odata.context": "/redfish/v1/$metadata#StorageCollection.StorageCollection",
-  "@odata.etag": "W/\"570254F2\"",
-  "@odata.id": "/redfish/v1/Systems/1/Storage",
-  "@odata.type": "#StorageCollection.StorageCollection",
-  "Description": "Storage subsystems known to this system",
-  "Name": "Storage",
-  "Members": [
-    {
-      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000"
+    "#Bios.ResetBios": {
+      "@Redfish.ActionInfo": "/redfish/v1/Systems/Self/Bios/ResetBiosActionInfo",
+      "target": "/redfish/v1/Systems/Self/Bios/Actions/Bios.ResetBios"
     },
-    {
-      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000001"
+    "#ZtVga.ChangeState": {
+      "@Redfish.ActionInfo": "/redfish/v1/Systems/Self/Bios/ChangeStateActionInfo",
+      "target": "/redfish/v1/Systems/Self/Bios/Actions/ZtVga.ChangeState"
     }
-  ],
-  "Members@odata.count": 2
-}
+  },
+...
+```
 
-## list storage
-$ redfish-bash.sh storage DA000000
-redfish-bash.sh storage DA000000
+Check particular manager attributes on ZT:
+
+```shell
+# redfish-bash.sh manager FirmwareVersion,PowerState,ManagerType
 {
-  "@odata.context": "/redfish/v1/$metadata#Storage.Storage",
-  "@odata.etag": "W/\"836C2E84\"",
-  "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000",
-  "@odata.type": "#Storage.v1_12_0.Storage",
-  "Id": "DA000000",
-  "Controllers": {
-    "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000/Controllers"
-  },
-  "Drives": [
-    {
-      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000/Drives/DA000000/"
-    }
-  ],
-  "Links": {
-    "Enclosures": [
-      {
-        "@odata.id": "/redfish/v1/Chassis/1"
-      }
-    ]
-  },
-  "Name": "NVMe Storage System",
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  },
-  "StorageControllers": [
-    {
-      "@odata.id": "/redfish/v1/Systems/1/Storage/DA000000#/StorageControllers/0/",
-      "FirmwareVersion": "EDA7602Q",
-      "Identifiers": [],
-      "Location": {
-        "PartLocation": {
-          "LocationOrdinalValue": 10,
-          "LocationType": "Slot",
-          "ServiceLabel": "Slot 10"
-        }
-      },
-      "MemberId": "0",
-      "Model": "SAMSUNG MZ1LB1T9HALS-00007",
-      "Name": "NVMe Storage Controller",
-      "SerialNumber": "S436NA0R757299",
-      "Status": {
-        "Health": "OK",
-        "State": "Enabled"
-      },
-      "SupportedControllerProtocols": [
-        "PCIe"
-      ],
-      "SupportedDeviceProtocols": [
-        "NVMe"
-      ]
-    }
-  ]
+  "FirmwareVersion": "0.43.00",
+  "PowerState": "On",
+  "ManagerType": "BMC"
 }
 ```
+Check all manager information on HPE:
+```
+## HPE
+# redfish-bash.sh  manager
+{
+  "@odata.context": "/redfish/v1/$metadata#Manager.Manager",
+  "@odata.etag": "W/\"5DF7965A\"",
+  "@odata.id": "/redfish/v1/Managers/1",
+  "@odata.type": "#Manager.v1_5_1.Manager",
+  "Id": "1",
+  "Actions": {
+    "#Manager.Reset": {
+      "ResetType@Redfish.AllowableValues": [
+        "ForceRestart",
+        "GracefulRestart"
+      ],
+      "target": "/redfish/v1/Managers/1/Actions/Manager.Reset"
+    }
+  },
+  "CommandShell": {
+    "ConnectTypesSupported": [
+      "SSH",
+      "Oem"
+    ],
+    "MaxConcurrentSessions": 9,
+    "ServiceEnabled": true
+  },
+  "DateTime": "2024-03-15T17:27:53Z",
+  "DateTimeLocalOffset": "+00:00",
+  "EthernetInterfaces": {
+    "@odata.id": "/redfish/v1/Managers/1/EthernetInterfaces"
+  },
+  "FirmwareVersion": "iLO 5 v2.81",
+...
+```
+
+Check particular manager attributes on HPE:
+```shell
+# redfish-bash.sh manager FirmwareVersion,PowerState,ManagerType
+{
+  "FirmwareVersion": "iLO 5 v2.81",
+  "PowerState": null,
+  "ManagerType": "BMC"
+}
+```
+
+Check all manager information on Dell:
+
+```shell
+## Dell
+$ redfish-bash.sh manager
+{
+  "@odata.context": "/redfish/v1/$metadata#Manager.Manager",
+  "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1",
+  "@odata.type": "#Manager.v1_17_0.Manager",
+  "Actions": {
+    "#Manager.Reset": {
+      "ResetType@Redfish.AllowableValues": [
+        "GracefulRestart"
+      ],
+      "target": "/redfish/v1/Managers/iDRAC.Embedded.1/Actions/Manager.Reset"
+    },
+    "#Manager.ResetToDefaults": {
+      "ResetType@Redfish.AllowableValues": [
+        "ResetAll",
+        "PreserveNetworkAndUsers"
+      ],
+      "target": "/redfish/v1/Managers/iDRAC.Embedded.1/Actions/Manager.ResetToDefaults"
+    },
+...
+```
+
+Check particular manager attributes on Dell:
+```shell
+# redfish-bash.sh manager FirmwareVersion,PowerState,ManagerType
+{
+  "FirmwareVersion": "7.00.30.00",
+  "PowerState": "On",
+  "ManagerType": "BMC"
+}
+
+```
+
+### system
+
+Check all system information on ZT:
+
+```
+## ZT
+# redfish-bash.sh system
+{
+  "@Redfish.Settings": {
+    "@odata.type": "#Settings.v1_2_2.Settings",
+    "SettingsObject": {
+      "@odata.id": "/redfish/v1/Systems/Self/SD"
+    }
+  },
+  "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
+  "@odata.etag": "\"1708975059\"",
+  "@odata.id": "/redfish/v1/Systems/Self",
+  "@odata.type": "#ComputerSystem.v1_8_0.ComputerSystem",
+  "Actions": {
+    "#ComputerSystem.Reset": {
+      "@Redfish.ActionInfo": "/redfish/v1/Systems/Self/ResetActionInfo",
+      "@Redfish.OperationApplyTimeSupport": {
+        "@odata.type": "#Settings.v1_2_2.OperationApplyTimeSupport",
+        "MaintenanceWindowDurationInSeconds": 600,
+        "MaintenanceWindowResource": {
+          "@odata.id": "/redfish/v1/Systems/Self"
+        },
+        "SupportedValues": [
+          "Immediate",
+          "AtMaintenanceWindowStart"
+        ]
+      },
+      "ResetType@Redfish.AllowableValues": [
+        "Nmi",
+        "On",
+        "ForceRestart",
+        "ForceOff",
+        "GracefulShutdown"
+      ],
+      "target": "/redfish/v1/Systems/Self/Actions/ComputerSystem.Reset"
+    }
+  },
+...
+```
+
+Check particular system attributes on ZT:
+```shell
+{
+"SystemType": "Physical",
+"Name": "Proteus I_Mix",
+"Manufacturer": "ZTSYSTEMS"
+}
+```
+
+Check all system information on HPE:
+```
+## HPE
+# redfish-bash.sh system
+{
+  "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
+  "@odata.etag": "W/\"98A3D2D0\"",
+  "@odata.id": "/redfish/v1/Systems/1",
+  "@odata.type": "#ComputerSystem.v1_13_0.ComputerSystem",
+  "Id": "1",
+  "Actions": {
+    "#ComputerSystem.Reset": {
+      "ResetType@Redfish.AllowableValues": [
+        "On",
+        "ForceOff",
+        "GracefulShutdown",
+        "ForceRestart",
+        "Nmi",
+        "PushPowerButton",
+        "GracefulRestart"
+      ],
+      "target": "/redfish/v1/Systems/1/Actions/ComputerSystem.Reset"
+    }
+  },
+...
+
+```
+
+Check particular system attributes on HPE:
+```shell
+# redfish-bash.sh system SystemType,Name,Manufacturer
+{
+  "SystemType": "Physical",
+  "Name": "Computer System",
+  "Manufacturer": "HPE"
+}
+```
+
+Check all system information on Dell:
+```
+## Dell
+# redfish-bash.sh system
+{
+  "@Redfish.Settings": {
+    "@odata.context": "/redfish/v1/$metadata#Settings.Settings",
+    "@odata.type": "#Settings.v1_3_5.Settings",
+    "SettingsObject": {
+      "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Settings"
+    },
+    "SupportedApplyTimes": [
+      "OnReset"
+    ]
+  },
+  "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
+  "@odata.id": "/redfish/v1/Systems/System.Embedded.1",
+  "@odata.type": "#ComputerSystem.v1_20_0.ComputerSystem",
+  "Actions": {
+    "#ComputerSystem.Reset": {
+      "target": "/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset",
+      "ResetType@Redfish.AllowableValues": [
+        "On",
+        "ForceOff",
+        "ForceRestart",
+        "GracefulRestart",
+        "GracefulShutdown",
+        "PushPowerButton",
+        "Nmi",
+        "PowerCycle"
+      ]
+    }
+  }
+...
+
+```
+
+Check particular system attributes on Dell:
+```shell
+{
+  "SystemType": "Physical",
+  "Name": "System",
+  "Manufacturer": "Dell Inc."
+}
+```
+
+### bios
+
+### power
+
+### virtual-media
+
+### eths
+
+### secure-boot
+
+### storage
