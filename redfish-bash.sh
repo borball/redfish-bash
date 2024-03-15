@@ -253,7 +253,7 @@ eths(){
   local ethernet_address=$(curl -sku "${username_password}" "$system" |jq -r '.EthernetInterfaces."@odata.id"')
   local ethernetInterfaces=$(curl -sku "${username_password}" "$bmc""$ethernet_address" |jq -r '.Members[]."@odata.id"')
   for ethernetInterface in $ethernetInterfaces; do
-    curl -sku "${username_password}" "$bmc""$ethernetInterface" |jq '{Id,MACAddress,LinkStatus,Status}'
+    curl -sku "${username_password}" "$bmc""$ethernetInterface" |jq
   done
 }
 
