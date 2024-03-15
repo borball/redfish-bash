@@ -1313,3 +1313,16 @@ If any command above cannot satisfy your needs, you can use command 'get' to fet
   }
 }
 ```
+
+
+## How to extend?
+
+Check if you can do with the existing command(s), If yes maybe add a new example in the instruction. If Not, 
+based on what function you are going to add, consider which command name you are going to use, define the function in the script like below:
+
+your_command_name(){
+  logic here
+}
+
+Then add usage or example in function usage(), that is it, then you can test it on your target server(s).
+
