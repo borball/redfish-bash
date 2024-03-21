@@ -68,7 +68,7 @@ usage(){
   echo "  $0 bios WorkloadProfile=vRAN"
   echo "  $0 eths"
   echo "  $0 power"
-  echo "  $0 power on|off|restart"
+  echo "  $0 power on|off|restart|nmi"
   echo "  $0 virtual-media"
   echo "  $0 virtual-media insert http://192.168.58.15/iso/agent-130.iso"
   echo "  $0 virtual-media eject"
@@ -272,6 +272,9 @@ power() {
     fi
     if [ "restart" = "$parameters" ]; then
       reset_type="ForceRestart"
+    fi
+    if [ "nmi" = "$parameters" ]; then
+      reset_type="Nmi"
     fi
 
     if [ -n "$reset_type" ]; then
