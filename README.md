@@ -49,7 +49,7 @@ Available commands:
   bios <attribute=value>
   eths
   power
-  power on|off|restart
+  power on|off|restart|nmi
   virtual-media
   virtual-media insert <url>>
   virtual-media eject
@@ -73,7 +73,7 @@ Examples:
   ./redfish-bash.sh bios WorkloadProfile=vRAN
   ./redfish-bash.sh eths
   ./redfish-bash.sh power
-  ./redfish-bash.sh power on|off|restart
+  ./redfish-bash.sh power on|off|restart|nmi
   ./redfish-bash.sh virtual-media
   ./redfish-bash.sh virtual-media insert http://192.168.58.15/iso/agent-130.iso
   ./redfish-bash.sh virtual-media eject
@@ -716,6 +716,15 @@ Power reset:
 
 ```shell
 # redfish-bash.sh power restart
+204 https://192.168.18.171/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset
+```
+
+Power nmi:
+
+# This will trigger NMI event to generate vmcore
+
+```shell
+# redfish-bash.sh power nmi
 204 https://192.168.18.171/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset
 ```
 
