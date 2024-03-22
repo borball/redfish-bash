@@ -47,7 +47,7 @@ usage(){
   echo "  power"
   echo "  power on|off|restart|nmi"
   echo "  virtual-media"
-  echo "  virtual-media insert <url>>"
+  echo "  virtual-media insert <url>"
   echo "  virtual-media eject"
   echo "  boot-once-from-cd"
   echo "  secure-boot"

@@ -51,7 +51,7 @@ Available commands:
   power
   power on|off|restart|nmi
   virtual-media
-  virtual-media insert <url>>
+  virtual-media insert <url>
   virtual-media eject
   boot-once-from-cd
   secure-boot
