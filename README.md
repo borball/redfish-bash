@@ -606,54 +606,21 @@ Check particular system attributes on Dell:
 
 ### bios
 
+Check BIOS settings:
+
+```shell
+redfish-bash.sh bios
+```
+
 BIOS settings on HPE:
 
 ```shell
+# redfish-bash.sh bios
 {
   "@Redfish.Settings": {
     "@odata.type": "#Settings.v1_0_0.Settings",
     "ETag": "E9BA1662",
-    "Messages": [
-      {
-        "MessageId": "Base.1.0.Success"
-      },
-      {
-        "MessageArgs": [
-          "NvmePort1"
-        ],
-        "MessageId": "Base.1.0.PropertyUnknown",
-        "RelatedProperties": [
-          "#/NvmePort1"
-        ]
-      },
-      {
-        "MessageArgs": [
-          "NvmePort10"
-        ],
-        "MessageId": "Base.1.0.PropertyUnknown",
-        "RelatedProperties": [
-          "#/NvmePort10"
-        ]
-      },
-      {
-        "MessageArgs": [
-          "NvmePort11"
-        ],
-        "MessageId": "Base.1.0.PropertyUnknown",
-        "RelatedProperties": [
-          "#/NvmePort11"
-        ]
-      },
-      {
-        "MessageArgs": [
-          "NvmePort12"
-        ],
-        "MessageId": "Base.1.0.PropertyUnknown",
-        "RelatedProperties": [
-          "#/NvmePort12"
-        ]
-      }
-    ],
+    ...
     "SettingsObject": {
       "@odata.id": "/redfish/v1/systems/1/bios/settings/"
     },
@@ -728,34 +695,50 @@ Update BIOS settings to enable vRAN workload profile:
 Check power status:
 
 ```
+redfish-bash.sh power
+```
+Example:
+```
 # redfish-bash.sh power
 On
 ```
 
 Power on:
-
+```
+redfish-bash.sh power on
+```
+Example:
 ```shell
 # redfish-bash.sh power on
 204 https://192.168.18.171/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset
 ```
 Power off:
-
+```
+redfish-bash.sh power off
+```
+Example:
 ```shell
 # redfish-bash.sh power off
 204 https://192.168.18.171/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset
 ```
 
 Power reset:
-
+```
+redfish-bash.sh power restart
+```
+Example:
 ```shell
 # redfish-bash.sh power restart
 204 https://192.168.18.171/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset
 ```
 
 Power nmi:
+This will trigger NMI event to generate vmcore
 
-# This will trigger NMI event to generate vmcore
-
+```shell
+redfish-bash.sh power nmi
+```
+Example:
 ```shell
 # redfish-bash.sh power nmi
 204 https://192.168.18.171/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset
@@ -765,6 +748,10 @@ Power nmi:
 
 Check current virtual-media status:
 
+```shell
+redfish-bash.sh virtual-media
+```
+Example:
 ```shell
 # redfish-bash.sh virtual-media
 {
@@ -811,6 +798,10 @@ Check current virtual-media status:
 
 Mount ISO as a virtual-media:
 
+```shell
+redfish-bash.sh virtual-media insert http://192.168.58.15/iso/sno130.iso
+```
+Example:
 ```shell
 # redfish-bash.sh virtual-media insert http://192.168.58.15/iso/sno130.iso
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.InsertMedia
@@ -866,6 +857,10 @@ Check status again:
 Eject virtual media:
 
 ```shell
+redfish-bash.sh virtual-media eject
+```
+Example:
+```shell
 # redfish-bash.sh virtual-media eject
 {"error":{"code":"iLO.0.10.ExtendedInfo","message":"See @Message.ExtendedInfo for more information.","@Message.ExtendedInfo":[{"MessageId":"Base.1.4.Success"}]}}200 https://192.168.14.130/redfish/v1/Managers/1/VirtualMedia/2/Actions/VirtualMedia.EjectMedia
 ```
@@ -873,7 +868,10 @@ Eject virtual media:
 ### eths
 
 Check ethernet devices on the server:
-
+```shell
+redfish-bash.sh eths
+```
+Example:
 ```shell
 # redfish-bash.sh eths
 {
@@ -901,215 +899,16 @@ Check ethernet devices on the server:
     "State": null
   },
   "UefiDevicePath": "PciRoot(0x1)/Pci(0x2,0x0)/Pci(0x0,0x0)"
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"A646FBCE\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/2",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "2",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": "LinkUp",
-  "MACAddress": "b4:96:91:da:5a:ed",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  }
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"7A316848\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/3",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "3",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": null,
-  "MACAddress": "b4:96:91:da:5a:ee",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": null,
-    "State": null
-  }
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"EFF43F05\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/4",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "4",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": "LinkUp",
-  "MACAddress": "b4:96:91:da:5a:ef",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": "OK",
-    "State": "Enabled"
-  }
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"3B401441\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/5",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "5",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": null,
-  "MACAddress": "b4:96:91:da:57:14",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": null,
-    "State": null
-  },
-  "UefiDevicePath": "PciRoot(0x1)/Pci(0x4,0x0)/Pci(0x0,0x0)"
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"EC5BFAF3\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/6",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "6",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": null,
-  "MACAddress": "b4:96:91:da:57:15",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": null,
-    "State": null
-  }
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"6C88DF7D\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/7",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "7",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": null,
-  "MACAddress": "b4:96:91:da:57:16",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": null,
-    "State": null
-  }
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"A5E93E38\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/8",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "8",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": null,
-  "MACAddress": "b4:96:91:da:57:17",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": null,
-    "State": null
-  }
-}
-{
-  "@odata.context": "/redfish/v1/$metadata#EthernetInterface.EthernetInterface",
-  "@odata.etag": "W/\"0920FBB0\"",
-  "@odata.id": "/redfish/v1/Systems/1/EthernetInterfaces/9",
-  "@odata.type": "#EthernetInterface.v1_4_1.EthernetInterface",
-  "Id": "9",
-  "FullDuplex": false,
-  "IPv4Addresses": [],
-  "IPv4StaticAddresses": [],
-  "IPv6AddressPolicyTable": [],
-  "IPv6Addresses": [],
-  "IPv6StaticAddresses": [],
-  "IPv6StaticDefaultGateways": [],
-  "InterfaceEnabled": null,
-  "LinkStatus": null,
-  "MACAddress": "5c:ba:2c:1f:6e:97",
-  "Name": "",
-  "NameServers": [],
-  "SpeedMbps": null,
-  "StaticNameServers": [],
-  "Status": {
-    "Health": null,
-    "State": null
-  },
-  "UefiDevicePath": "PciRoot(0x0)/Pci(0x1C,0x5)/Pci(0x0,0x0)"
-}
+}...
 ```
 
 ### secure-boot
 
 Check if secure boot is enabled on the node:
-
+```shell
+redfish-bash.sh secure-boot
+```
+Example:
 ```shell
 # redfish-bash.sh secure-boot
 false
@@ -1117,11 +916,19 @@ false
 
 Enable secure-boot:
 ```shell
+redfish-bash.sh secure-boot true
+```
+Example:
+```shell
 # redfish-bash.sh secure-boot true
 {"@Message.ExtendedInfo":[{"Message":"The request completed successfully.","MessageArgs":[],"MessageArgs@odata.count":0,"MessageId":"Base.1.12.Success","RelatedProperties":[],"RelatedProperties@odata.count":0,"Resolution":"None","Severity":"OK"},{"Message":"The operation is successfully completed.","MessageArgs":[],"MessageArgs@odata.count":0,"MessageId":"IDRAC.2.9.SYS430","RelatedProperties":[],"RelatedProperties@odata.count":0,"Resolution":"No response action is required.However, to make them immediately effective, restart the host server.","Severity":"Informational"}]}secure boot has been set as true, you may need to reboot the node to take effect.
 ```
 
 Disable secure-boot:
+```shell
+redfish-bash.sh secure-boot false
+```
+Example:
 ```shell
 # redfish-bash.sh secure-boot false
 {"error":{"@Message.ExtendedInfo":[{"Message":"Unable to apply the configuration changes because an import or export operation is currently in progress.","MessageArgs":["SecureBootEnable"],"MessageArgs@odata.count":1,"MessageId":"IDRAC.2.9.SYS431","RelatedProperties":["#/SecureBootEnable"],"RelatedProperties@odata.count":1,"Resolution":"Wait for the current import or export operation to complete and retry the operation. If the issue persists, contact your service provider.","Severity":"Warning"},{"Message":"Unable to complete the operation because the provider is not ready.","MessageArgs":[],"MessageArgs@odata.count":0,"MessageId":"IDRAC.2.9.RAC0508","RelatedProperties":[],"RelatedProperties@odata.count":0,"Resolution":"Wait for few minutes, refresh the page and retry. If the problem persists, reset the iDRAC and retry the operation.","Severity":"Critical"}],"code":"Base.1.12.GeneralError","message":"A general error has occurred. See ExtendedInfo for more information"}}secure boot has been set as false, you may need to reboot the node to take effect.
@@ -1130,7 +937,10 @@ Disable secure-boot:
 ### storage
 
 Check storages:
-
+```shell
+redfish-bash.sh storage
+```
+Example:
 ```shell
 # redfish-bash.sh storage
 {
@@ -1154,6 +964,10 @@ Check storages:
 
 Check particular storage:
 
+```shell
+redfish-bash.sh storage DA000000
+```
+Example:
 ```shell
 # redfish-bash.sh storage DA000000
 {
@@ -1218,7 +1032,12 @@ Check particular storage:
 If any command above cannot satisfy your needs, you can use command 'get' to fetch the information:
 
 ```shell
-# ./redfish-bash.sh get
+redfish-bash.sh get
+```
+Example:
+
+```shell
+# redfish-bash.sh get
 {
   "@odata.context": "/redfish/v1/$metadata#ServiceRoot.ServiceRoot",
   "@odata.etag": "\"1710499398\"",
