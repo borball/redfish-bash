@@ -19,9 +19,9 @@ redfish-bash.sh
 ```
 
 ```shell
-# redfish-bash.sh 
+# ./redfish-bash.sh
 Usage :   ./redfish-bash.sh command <parameters>
-Available commands:
+Available commands: 
   -------------------------------------------
   #login BMC
   login [bmc] [username:password]
@@ -36,11 +36,12 @@ Available commands:
   server N
   -------------------------------------------
   #resource management
+  root
   system
   system <jsonpath>
   manager
   manager <jsonpath>
-  #BMC reboot
+  #BMC reset
   bmc-reboot
   bios
   #read attributes
@@ -58,16 +59,18 @@ Available commands:
   secure-boot true|false
   storage
   storage <ID>
-  get
 
-Examples:
+Examples: 
   ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser
   ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser [kvm_uuid]
   ./redfish-bash.sh servers
   ./redfish-bash.sh server
   ./redfish-bash.sh server 0
+  ./redfish-bash.sh root
   ./redfish-bash.sh system
   ./redfish-bash.sh system Manufacturer,Model
+  ./redfish-bash.sh manager
+  ./redfish-bash.sh manager FirmwareVersion,PowerState,ManagerType
   ./redfish-bash.sh bios
   ./redfish-bash.sh bios Attributes.WorkloadProfile
   ./redfish-bash.sh bios WorkloadProfile=vRAN
@@ -82,8 +85,9 @@ Examples:
   ./redfish-bash.sh secure-boot true|false
   ./redfish-bash.sh storage
   ./redfish-bash.sh storage DA000000
+  ./redfish-bash.sh get
+  ./redfish-bash.sh get /redfish/v1/TelemetryService
 Run : ./redfish-bash.sh login before using other commands for the first time.
-
 ```
 
 ## Examples
@@ -91,7 +95,11 @@ Run : ./redfish-bash.sh login before using other commands for the first time.
 ### login
 
 ```shell
-## login
+redfish-bash.sh login https://192.168.13.146 Administrator:superuser
+```
+Example:
+
+```shell
 # redfish-bash.sh login https://192.168.13.146 Administrator:superuser
 login successful, will use this server for the following commands.
 index: 0
@@ -109,8 +117,11 @@ userPass: dummy:dummy
 ### servers
 Check all servers managed by redfish-bash:
 
+```shell
+redfish-bash.sh servers
 ```
-## servers
+Example:
+```
 # redfish-bash.sh servers
 following server is being used:
 
@@ -130,13 +141,20 @@ use command 'server N' to switch the servers
 
 ```
 Check current server managed by redfish-bash:
+```shell
+redfish-bash.sh server 
 ```
-# server
+Example:
+```
 # redfish-bash.sh server 
 following server is being used:
 
 ```
 Switch to other server:
+```shell
+redfish-bash.sh server 1
+```
+Example:
 ```
 # redfish-bash.sh server 1
 following server will be used:
@@ -146,9 +164,11 @@ userPass: Administrator:superuser
 ```
 
 ### root
-
-Check all resources managed by redfish API(ZT):
-
+Check all resources managed by redfish:
+```shell
+redfish-bash.sh root
+```
+Example on ZT server:
 ```shell
 # redfish-bash.sh root
 {
@@ -235,8 +255,12 @@ Check all resources managed by redfish API(ZT):
 }
 ```
 
-Get particular services:
+Check endpoint of particular service(s):
 
+```shell
+redfish-bash.sh root Managers,Systems
+```
+Example:
 ```shell
 # redfish-bash.sh root Managers,Systems
 {
@@ -248,6 +272,8 @@ Get particular services:
   }
 }
 ```
+
+Get particular service(Manager):
 
 ```
 # redfish-bash.sh get /redfish/v1/Managers
@@ -266,7 +292,7 @@ Get particular services:
   "Name": "Manager Collection"
 }
 ```
-
+Get particular service(System):
 ```
 #redfish-bash.sh get /redfish/v1/Systems
 {
@@ -308,7 +334,11 @@ Get particular services:
 
 ### manager
 
-Check all manager information on ZT:
+Check all manager information:
+```shell
+redfish-bash.sh manager
+```
+Example on ZT:
 ```
 ## ZT
 # redfish-bash.sh manager
@@ -340,8 +370,11 @@ Check all manager information on ZT:
 ...
 ```
 
-Check particular manager attributes on ZT:
-
+Check particular manager attributes:
+```shell
+redfish-bash.sh manager FirmwareVersion,PowerState,ManagerType
+```
+Example on ZT:
 ```shell
 # redfish-bash.sh manager FirmwareVersion,PowerState,ManagerType
 {
@@ -350,7 +383,7 @@ Check particular manager attributes on ZT:
   "ManagerType": "BMC"
 }
 ```
-Check all manager information on HPE:
+Example on HPE:
 ```
 ## HPE
 # redfish-bash.sh  manager

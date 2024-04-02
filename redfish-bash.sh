@@ -32,6 +32,7 @@ usage(){
   echo "  server N"
   echo "  -------------------------------------------"
   echo "  #resource management"
+  echo "  root"
   echo "  system"
   echo "  system <jsonpath>"
   echo "  manager"
@@ -61,8 +62,11 @@ usage(){
   echo "  $0 servers"
   echo "  $0 server"
   echo "  $0 server 0"
+  echo "  $0 root"
   echo "  $0 system"
   echo "  $0 system Manufacturer,Model"
+  echo "  $0 manager"
+  echo "  $0 manager FirmwareVersion,PowerState,ManagerType"
   echo "  $0 bios"
   echo "  $0 bios Attributes.WorkloadProfile"
   echo "  $0 bios WorkloadProfile=vRAN"
@@ -77,6 +81,8 @@ usage(){
   echo "  $0 secure-boot true|false"
   echo "  $0 storage"
   echo "  $0 storage DA000000"
+  echo "  $0 get"
+  echo "  $0 get /redfish/v1/TelemetryService"
   echo "Run : $0 login before using other commands for the first time."
 }
 
