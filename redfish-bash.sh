@@ -301,6 +301,7 @@ virtual-media(){
   for virtual_media in $virtual_medias; do
     if [ $(curl -sku "${username_password}" "$bmc""$virtual_media" | jq '.MediaTypes[]' |grep -ciE 'CD|DVD') -gt 0 ]; then
       virtual_media_selected=$virtual_media
+      break
     fi
   done
 
