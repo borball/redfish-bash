@@ -86,6 +86,10 @@ usage(){
   echo "Run : $0 login before using other commands for the first time."
 }
 
+help(){
+  usage
+}
+
 _log(){
   if [[ "true" == "$DEBUG" ]]; then
     echo "$@"
