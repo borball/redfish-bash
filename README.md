@@ -24,8 +24,8 @@ Usage :   ./redfish-bash.sh command <parameters>
 Available commands: 
   -------------------------------------------
   #login BMC
-  login [bmc] [username:password]
-  login [bmc] [username:password] [kvm_uuid]
+  login [bmc]
+  login [bmc] [kvm_uuid]
   -------------------------------------------
   #bmc server context
   #all servers:
@@ -61,8 +61,8 @@ Available commands:
   storage <ID>
 
 Examples: 
-  ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser
-  ./redfish-bash.sh login https://192.168.13.146 Administrator:superuser [kvm_uuid]
+  ./redfish-bash.sh login https://192.168.13.146
+  ./redfish-bash.sh login https://192.168.13.146 [kvm_uuid]
   ./redfish-bash.sh servers
   ./redfish-bash.sh server
   ./redfish-bash.sh server 0
@@ -88,30 +88,37 @@ Examples:
   ./redfish-bash.sh get
   ./redfish-bash.sh get /redfish/v1/TelemetryService
 Run : ./redfish-bash.sh login before using other commands for the first time.
+BMC credential must be saved in $NETRC in following format
+    machine <BMC_HOST> login <USER_NAME> password <PASSWORD>
+    default login <USER_NAME> password <PASSWORD>
 ```
 
 ## Examples
 
+
 ### login
 
+The script uses credential in [netrc-file](https://everything.curl.dev/usingcurl/netrc.html) to access the redfish API.
+
+Prepare a file .bmc.netrc in your HOME folder before running the script.
+
 ```shell
-redfish-bash.sh login https://192.168.13.146 Administrator:superuser
+redfish-bash.sh login https://192.168.13.146
 ```
 Example:
 
 ```shell
-# redfish-bash.sh login https://192.168.13.146 Administrator:superuser
+# redfish-bash.sh login https://192.168.13.130
 login successful, will use this server for the following commands.
-index: 0
-bmc: https://192.168.13.146
-userPass: Administrator:superuser
+index: 1
+bmc: https://192.168.14.130
 
 ## login to the BMC console simulated by sushy-tools:
-# redfish-bash.sh login https://192.168.58.15:8080 a:b 22222222-1111-1111-0000-000000000010
+# redfish-bash.sh login https://192.168.58.15:8080 22222222-1111-1111-0000-000000000010
 login successful, will use this server for the following commands.
 index: 2
 bmc: https://192.168.58.15:8080
-userPass: dummy:dummy
+
 ```
 
 ### servers
@@ -160,7 +167,6 @@ Example:
 following server will be used:
 index: 1
 bmc: https://192.168.13.146
-userPass: Administrator:superuser
 ```
 
 ### root
