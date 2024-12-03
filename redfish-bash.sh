@@ -3,7 +3,7 @@
 #
 umask 0066
 NETRC="${HOME}/.bmc.netrc"
-CURL="curl -k --netrc-file ${NETRC}"
+CURL="curl -k --netrc-file ${NETRC} ${REDFISH_CURL_OPTS}"
 
 if ! type "yq" > /dev/null; then
   echo "Cannot find yq in the path, please install yq on the node first. ref: https://github.com/mikefarah/yq#install"
