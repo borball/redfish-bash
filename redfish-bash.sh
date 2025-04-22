@@ -306,7 +306,16 @@ power() {
 virtual-media(){
   local virtual_media_selected
   local manager=$(_manager)
-  local virtual_medias=$($CURL -s "$manager"/"VirtualMedia" | jq -r '.Members[]."@odata.id"' )
+  local system=$(_system)
+  local virtual_medias=$($CURL -s "$manager"/"VirtualMedia" | jq -r '.Members[]."@odata.id"' 2>/dev/null)
+  if [[ -z "$virtual_medias" ]]; then
+    virtual_medias=$($CURL -s "$system"/"VirtualMedia" | jq -r '.Members[]."@odata.id"' 2>/dev/null)
+  fi
+
+  if [[ -z "$virtual_medias" ]]; then
+    echo "Failed to get virtual media"
+    return -1
+  fi
   for virtual_media in $virtual_medias; do
     if [ $($CURL -s "$bmc""$virtual_media" | jq '.MediaTypes[]' |grep -ciE 'CD|DVD') -gt 0 ]; then
       virtual_media_selected=$virtual_media
