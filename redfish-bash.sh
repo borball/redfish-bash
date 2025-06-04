@@ -128,13 +128,13 @@ login(){
   if [ "${#bmc_info[@]}" -gt 0 ]; then
     local bmc="${bmc_info[0]}"
 
-    local redfish_url="$bmc"/redfish/v1/Systems
+    local redfish_url="$bmc"/redfish/v1/Systems/
     if [ "${#bmc_info[@]}" = 2 ]; then
       uuid="${bmc_info[2]}"
       redfish_url="$redfish_url/Systems/$uuid"
     fi
 
-    if [ $($CURL -s -o /dev/null -w ''%{http_code}'' "$redfish_url") -eq 200 ]; then
+    if [ $($CURL -k -s -o /dev/null -w ''%{http_code}'' "$redfish_url") -eq 200 ]; then
       #login succeed
       echo "login successful, will use this server for the following commands."
       _save_cfg "$bmc"
@@ -352,10 +352,17 @@ virtual-media(){
 
 boot-once-from-cd() {
   local system=$(_system)
-  $CURL --globoff  -L -w "%{http_code} %{url_effective}\\n" \
-  -H "Content-Type: application/json" -H "Accept: application/json" \
-  -d '{"Boot":{ "BootSourceOverrideEnabled": "Once", "BootSourceOverrideTarget": "Cd" }}' \
-  -X PATCH $system
+  if [[ -z $($CURL --globoff -sk $system/Settings| jq -r '.Boot["BootSourceOverrideTarget@Redfish.AllowableValues"] // empty') ]]; then
+    $CURL --globoff  -L -w "%{http_code} %{url_effective}\\n" \
+    -H "Content-Type: application/json" -H "Accept: application/json" \
+    -d '{"Boot":{ "BootSourceOverrideEnabled": "Once", "BootSourceOverrideTarget": "Cd" }}' \
+    -X PATCH $system
+  else
+    $CURL --globoff  -L -w "%{http_code} %{url_effective}\\n" \
+    -H "Content-Type: application/json" -H "Accept: application/json" \
+    -d '{"Boot":{ "BootSourceOverrideEnabled": "Once", "BootSourceOverrideTarget": "Cd" }}' \
+    -X PATCH $system/Settings
+  fi
 }
 
 secure-boot(){
@@ -403,7 +410,7 @@ get(){
   if [ -n "$parameters" ]; then
     $CURL -s "$bmc"$parameters |jq
   else
-    $CURL -s "$bmc"/redfish/v1 |jq
+    $CURL -sk "$bmc"/redfish/v1 |jq
   fi
 }
 
