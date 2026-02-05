@@ -1,6 +1,6 @@
 # redfish-bash
 
-A wrapper script of redfish API, tested on ZT/HPE/Dell/Sushy-tools servers.
+A wrapper script of redfish API, tested on ZT/HPE/Dell/Sushy-tools/KubeVirt-Redfish servers.
 
 ## Install
 
@@ -11,6 +11,35 @@ A wrapper script of redfish API, tested on ZT/HPE/Dell/Sushy-tools servers.
 curl -fsSL -o /usr/local/bin/redfish-bash.sh https://raw.githubusercontent.com/borball/redfish-bash/master/redfish-bash.sh
 chmod +x /usr/local/bin/redfish-bash.sh
 ```
+
+## Authentication Methods
+
+The script supports multiple authentication methods (in order of preference):
+
+### 1. NETRC file (highest priority)
+If `~/.bmc.netrc` exists, it will be used for all BMC connections.
+
+```
+machine <BMC_HOST> login <USER_NAME> password <PASSWORD>
+default login <USER_NAME> password <PASSWORD>
+```
+
+### 2. Session-based authentication (recommended)
+Login with username and password to create a Redfish session. The session token is stored and auto-refreshed when expired.
+
+```shell
+redfish-bash.sh login https://192.168.13.146 admin password123
+```
+
+Features:
+- Creates Redfish session via `/redfish/v1/SessionService/Sessions`
+- Stores session token (`X-Auth-Token`) in config
+- Auto-validates tokens before use
+- Auto-refreshes expired tokens using stored credentials
+- Falls back to basic auth if refresh fails
+
+### 3. YAML config (fallback)
+Credentials stored in `.bmc-all.yaml` / `.bmc-current.yaml` using basic auth.
 
 ## Usage
 
@@ -23,9 +52,10 @@ redfish-bash.sh
 Usage :   ./redfish-bash.sh command <parameters>
 Available commands: 
   -------------------------------------------
-  #login BMC
-  login [bmc]
-  login [bmc] [kvm_uuid]
+  #login BMC (session-based authentication)
+  login <bmc_url> <username> <password>
+  #login BMC (legacy, requires NETRC or YAML)
+  login <bmc_url> [system_uuid]
   -------------------------------------------
   #bmc server context
   #all servers:
@@ -61,8 +91,8 @@ Available commands:
   storage <ID>
 
 Examples: 
-  ./redfish-bash.sh login https://192.168.13.146
-  ./redfish-bash.sh login https://192.168.13.146 [kvm_uuid]
+  ./redfish-bash.sh login https://192.168.13.146 admin password123
+  ./redfish-bash.sh login https://192.168.13.146 (requires NETRC)
   ./redfish-bash.sh servers
   ./redfish-bash.sh server
   ./redfish-bash.sh server 0
@@ -88,9 +118,6 @@ Examples:
   ./redfish-bash.sh get
   ./redfish-bash.sh get /redfish/v1/TelemetryService
 Run : ./redfish-bash.sh login before using other commands for the first time.
-BMC credential must be saved in $NETRC in following format
-    machine <BMC_HOST> login <USER_NAME> password <PASSWORD>
-    default login <USER_NAME> password <PASSWORD>
 ```
 
 ## Examples
@@ -98,27 +125,60 @@ BMC credential must be saved in $NETRC in following format
 
 ### login
 
-The script uses credential in [netrc-file](https://everything.curl.dev/usingcurl/netrc.html) to access the redfish API.
+#### Session-based login (recommended)
 
-Prepare a file .bmc.netrc in your HOME folder before running the script.
+Login with BMC URL, username, and password to create a Redfish session:
+
+```shell
+redfish-bash.sh login https://192.168.13.146 Administrator Redhat123!
+```
+
+Example:
+
+```shell
+# redfish-bash.sh login https://192.168.14.130 Administrator Redhat123!
+index: 4
+bmc: https://192.168.14.130
+userPass: Administrator:Redhat123!
+authToken: 5616eb0ca86060228da5ae19f610bbd9
+location: https://192.168.14.130/redfish/v1/SessionService/Sessions/administrator000000006984b50dcf1a9fb
+login successful, will use this server for the following commands.
+Using session token authentication
+```
+
+The session token is stored in the config file and will be:
+- Validated before each use
+- Auto-refreshed when expired using stored credentials
+- Used via `X-Auth-Token` header for all subsequent requests
+
+#### Legacy login (NETRC/YAML)
+
+If you have credentials in a [netrc-file](https://everything.curl.dev/usingcurl/netrc.html), you can login with just the BMC URL:
+
+Prepare a file `.bmc.netrc` in your HOME folder:
+```
+machine 192.168.13.146 login admin password secret123
+default login admin password secret123
+```
 
 ```shell
 redfish-bash.sh login https://192.168.13.146
 ```
+
 Example:
 
 ```shell
 # redfish-bash.sh login https://192.168.13.130
-login successful, will use this server for the following commands.
-index: 1
-bmc: https://192.168.14.130
+login successful (using NETRC/YAML auth), will use this server for the following commands.
+Using NETRC authentication: /root/.bmc.netrc
+```
 
-## login to the BMC console simulated by sushy-tools:
-# redfish-bash.sh login https://192.168.58.15:8080 22222222-1111-1111-0000-000000000010
-login successful, will use this server for the following commands.
-index: 2
-bmc: https://192.168.58.15:8080
+#### Login to sushy-tools (KVM emulator)
 
+```shell
+# redfish-bash.sh login https://192.168.58.15:8080 admin password 22222222-1111-1111-0000-000000000010
+login successful, will use this server for the following commands.
+Using session token authentication
 ```
 
 ### servers
@@ -130,19 +190,14 @@ redfish-bash.sh servers
 Example:
 ```
 # redfish-bash.sh servers
-following server is being used:
-
 
 All servers in the list:
-0   https://192.168.58.15:8080
-1   https://192.168.13.146
-2   https://192.168.13.147
-3   https://192.168.13.148
-4   https://192.168.13.149
-5   https://192.168.14.130
-6   https://192.168.14.131
-7   https://192.168.14.132
-8   https://192.168.14.133
+0   https://192.168.58.15:8080 (yaml)
+1   https://192.168.13.146 (yaml)
+2   https://192.168.13.147 (yaml)
+3   https://192.168.13.148 (yaml)
+4   https://192.168.14.130 (yaml)
+
 use command 'server' to check the current server
 use command 'server N' to switch the servers
 
@@ -155,6 +210,12 @@ Example:
 ```
 # redfish-bash.sh server 
 following server is being used:
+index: 4
+bmc: https://192.168.14.130
+userPass: Administrator:Redhat123!
+authToken: 5616eb0ca86060228da5ae19f610bbd9
+location: https://192.168.14.130/redfish/v1/SessionService/Sessions/administrator000000006984b50dcf1a9fb
+Using session token authentication
 
 ```
 Switch to other server:
@@ -167,6 +228,10 @@ Example:
 following server will be used:
 index: 1
 bmc: https://192.168.13.146
+userPass: admin:password123
+authToken: abc123def456...
+location: https://192.168.13.146/redfish/v1/SessionService/Sessions/...
+Using session token authentication
 ```
 
 ### root
