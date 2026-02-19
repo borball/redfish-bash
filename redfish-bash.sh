@@ -76,6 +76,7 @@ usage(){
   echo "  power on|off|restart|nmi"
   echo "  virtual-media"
   echo "  virtual-media insert <url>"
+  echo "  virtual-media <url>          # same as insert <url>"
   echo "  virtual-media eject"
   echo "  boot-once-from-cd"
   echo "  secure-boot"
@@ -104,6 +105,7 @@ usage(){
   echo "  $0 power on|off|restart|nmi"
   echo "  $0 virtual-media"
   echo "  $0 virtual-media insert http://192.168.58.15/iso/agent-130.iso"
+  echo "  $0 virtual-media http://192.168.58.15/iso/agent-130.iso"
   echo "  $0 virtual-media eject"
   echo "  $0 boot-once-from-cd"
   echo "  $0 secure-boot"
@@ -648,9 +650,15 @@ virtual-media(){
   else
     local virtual_media_ops=($parameters)
     local virtual_media_action="${virtual_media_ops[0]}"
+    local iso_image="${virtual_media_ops[1]}"
+
+    # If first parameter looks like a URL, treat as "insert <url>"
+    if [[ "$virtual_media_action" =~ ^https?:// ]]; then
+      iso_image="$virtual_media_action"
+      virtual_media_action="insert"
+    fi
 
     if [ "insert" = "$virtual_media_action" ]; then
-      local iso_image="${virtual_media_ops[1]}"
       if [ -z "$iso_image" ]; then
         echo "Need to specify the ISO location."
       else
@@ -659,12 +667,12 @@ virtual-media(){
           -d "{\"Image\": \"${iso_image}\"}" \
           -X POST "$bmc""$virtual_media_selected"/Actions/VirtualMedia.InsertMedia
       fi
-    fi
-
-    if [ "eject" = "$virtual_media_action" ]; then
+    elif [ "eject" = "$virtual_media_action" ]; then
       $CURL --globoff -L -w "%{http_code} %{url_effective}\\n" \
         -H "Content-Type: application/json" -H "Accept: application/json" \
         -d '{}'  -X POST "$bmc""$virtual_media_selected"/Actions/VirtualMedia.EjectMedia
+    else
+      echo "Unknown virtual-media action: $virtual_media_action (use 'insert <url>' or 'eject')"
     fi
   fi
 }
