@@ -64,6 +64,8 @@ usage(){
   echo "  manager"
   echo "  manager <jsonpath>"
   echo "  get <redfish_path>"
+  echo "  nics              # NIC inventory (card view); uses current server"
+  echo "  nics [--json] [-o FILE]"
   echo "  #BMC reset"
   echo "  bmc-reboot"
   echo "  bios"
@@ -114,6 +116,8 @@ usage(){
   echo "  $0 storage DA000000"
   echo "  $0 get"
   echo "  $0 get /redfish/v1/TelemetryService"
+  echo "  $0 nics"
+  echo "  $0 nics --json -o nics.json"
   echo "  $0 help"
   echo "Run : $0 login before using other commands for the first time."
   echo ""
@@ -740,10 +744,16 @@ root(){
 }
 
 get(){
+  # Normalize so both bmc=https://host and bmc=https://host/redfish/v1 work (e.g. for nics subcommand)
+  local base="${bmc%/}"
+  [[ "$base" != */redfish/v1 ]] && base="${base}/redfish/v1"
   if [ -n "$parameters" ]; then
-    $CURL -s "$bmc"$parameters |jq
+    local path="${parameters#/redfish/v1}"
+    path="${path:-/}"
+    [[ "$path" != /* ]] && path="/${path}"
+    $CURL -s "${base}${path}" |jq
   else
-    $CURL -sk "$bmc"/redfish/v1 |jq
+    $CURL -sk "$base" |jq
   fi
 }
 
@@ -777,6 +787,21 @@ else
   _reinit_auth_from_config
   export bmc=$(yq ".bmc" "$CURRENT_SERVERS_CFG")
   export uuid=$(yq ".uuid" "$CURRENT_SERVERS_CFG" 2>/dev/null)
+
+  if [ "nics" = "$cmd" ]; then
+    # Pass base URL and auth to nics.sh so it uses direct curl (no subprocess per request)
+    _base="${bmc%/}"
+    [[ "$_base" != */redfish/v1 ]] && _base="${_base}/redfish/v1"
+    export REDFISH_BASE_URL="$_base"
+    if [[ "$AUTH_METHOD" == "session" && -n "${SESSION_TOKEN:-}" ]]; then
+      export REDFISH_SESSION_TOKEN="$SESSION_TOKEN"
+    elif [[ -n "$(yq ".userPass" "$CURRENT_SERVERS_CFG" 2>/dev/null)" && "$(yq ".userPass" "$CURRENT_SERVERS_CFG" 2>/dev/null)" != "null" ]]; then
+      export REDFISH_USER_PASS="$(yq ".userPass" "$CURRENT_SERVERS_CFG" 2>/dev/null)"
+    fi
+    export REDFISH_INSECURE=1
+    REDFISH_BASH="$BASEDIR/redfish-bash.sh" "$BASEDIR/nics.sh" "${@:2}"
+    exit $?
+  fi
 
   $cmd
 fi

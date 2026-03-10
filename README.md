@@ -71,6 +71,9 @@ Available commands:
   system <jsonpath>
   manager
   manager <jsonpath>
+  get <redfish_path>
+  nics              # NIC inventory (card view); uses current server
+  nics [--json] [-o FILE]
   #BMC reset
   bmc-reboot
   bios
@@ -117,6 +120,8 @@ Examples:
   ./redfish-bash.sh storage DA000000
   ./redfish-bash.sh get
   ./redfish-bash.sh get /redfish/v1/TelemetryService
+  ./redfish-bash.sh nics
+  ./redfish-bash.sh nics --json -o nics.json
 Run : ./redfish-bash.sh login before using other commands for the first time.
 ```
 
@@ -942,7 +947,25 @@ Check ethernet devices on the server:
 ```shell
 redfish-bash.sh eths
 ```
-Example:
+
+### nics
+
+Fetch NIC (network adapter) inventory from the BMC and show a card view (model, state, health, location, PCI address, ports, MACs). Uses the current server from `login` or `server N`; base URL and auth are passed from `redfish-bash.sh` so no subprocess is used per request.
+
+```shell
+redfish-bash.sh nics                    # card view (default)
+redfish-bash.sh nics --json             # raw JSON only
+redfish-bash.sh nics --json -o nics.json   # JSON to file
+```
+
+You can also run `nics.sh` directly from the repo (after `redfish-bash.sh login`); it will use the same config when `REDFISH_BASE_URL` is set by the parent, or fall back to `redfish-bash.sh get` when run standalone. For fully standalone use (no redfish-bash config), run with explicit URL and credentials:
+
+```shell
+./nics.sh --bmc-url https://<bmc>/redfish/v1 -u <user> -p <password> -k
+```
+
+### eths — example output
+
 ```shell
 # redfish-bash.sh eths
 {
