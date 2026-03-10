@@ -80,7 +80,7 @@ Available commands:
   bios <attribute=value>
   eths
   power
-  power on|off|restart|nmi
+  power on|off|restart|nmi|reset|graceful
   virtual-media
   virtual-media insert <url>
   virtual-media eject
