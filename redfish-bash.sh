@@ -609,6 +609,12 @@ power() {
     if [ "restart" = "$parameters" ]; then
       reset_type="ForceRestart"
     fi
+    if [ "cycle" = "$parameters" ]; then
+      reset_type="PowerCycle"
+    fi
+    if [ "graceful" = "$parameters" ]; then
+      reset_type="GracefulRestart"
+    fi
     if [ "nmi" = "$parameters" ]; then
       reset_type="Nmi"
     fi
