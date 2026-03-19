@@ -5,26 +5,12 @@
 # (e.g. HPE iLO 7): each NIC with Model, State, Health, Location, SKU,
 # Firmware Version, Number Of Ports.
 #
-# Invocation:
-#   # Via redfish-bash (uses current server from login/server context)
+# Invocation (only via redfish-bash; uses current server from login / server N):
 #   redfish-bash.sh nics
 #   redfish-bash.sh nics --json
 #   redfish-bash.sh nics --json -o nics.json
 #
-#   # Direct run (after redfish-bash.sh login; same dir or REDFISH_BASH set)
-#   ./nics.sh
-#   ./nics.sh --json
-#
-#   # Standalone (direct Redfish, no redfish-bash config)
-#   ./nics.sh --bmc-url https://<bmc>/redfish/v1 -u <user> -p <password> -k
-#   ./nics.sh --bmc-url https://<bmc>/redfish/v1 --token <session-token> -k
-#
 # Options:
-#   --bmc-url URL   Redfish root (e.g. https://ilo/redfish/v1). If omitted, use redfish-bash.
-#   -u, --user      BMC username (standalone)
-#   -p, --password  BMC password (standalone)
-#   --token TOKEN   Session token (standalone; skip user/pass)
-#   -k, --insecure  Allow self-signed TLS
 #   --json          Output raw JSON only (no card view)
 #   -o FILE         Write JSON to FILE
 #
@@ -36,88 +22,25 @@ if [[ -z "${BASH_VERSION:-}" ]]; then
   exit 1
 fi
 
-
-REDFISH_BASH="${REDFISH_BASH:-}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Resolve redfish-bash: env, same dir (nics.sh next to redfish-bash.sh), or ../redfish-bash/
-if [[ -z "$REDFISH_BASH" ]]; then
-  if [[ -x "${SCRIPT_DIR}/redfish-bash.sh" ]]; then
-    REDFISH_BASH="${SCRIPT_DIR}/redfish-bash.sh"
-  elif [[ -x "${SCRIPT_DIR}/../redfish-bash/redfish-bash.sh" ]]; then
-    REDFISH_BASH="${SCRIPT_DIR}/../redfish-bash/redfish-bash.sh"
-  fi
-fi
-
-BASE_URL=""
-USER=""
-PASSWORD=""
-TOKEN=""
-INSECURE=""
 OUTPUT_JSON=false
-OUT_FILE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --bmc-url)   BASE_URL="$2"; shift 2 ;;
-    -u|--user)   USER="$2"; shift 2 ;;
-    -p|--password) PASSWORD="$2"; shift 2 ;;
-    --token)     TOKEN="$2"; shift 2 ;;
-    -k|--insecure) INSECURE=1; shift ;;
     --json)      OUTPUT_JSON=true; shift ;;
     -o)          OUT_FILE="$2"; shift 2 ;;
     -h|--help)
-      sed -n '1,40p' "$0" | grep -E '^# |^#Usage|^#   |^#Options' | sed 's/^# \?//'
+      sed -n '1,45p' "$0" | grep -E '^# |^#Usage|^#   |^#Options' | sed 's/^# \?//'
       exit 0
       ;;
     *)           echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
 
-# When invoked by redfish-bash.sh nics, use passed config (direct curl) instead of subprocess
-if [[ -z "$BASE_URL" && -n "${REDFISH_BASE_URL:-}" ]]; then
-  BASE_URL="${REDFISH_BASE_URL}"
-  if [[ -n "${REDFISH_SESSION_TOKEN:-}" ]]; then
-    TOKEN="${REDFISH_SESSION_TOKEN}"
-  elif [[ -n "${REDFISH_USER_PASS:-}" && "$REDFISH_USER_PASS" =~ ^([^:]+):(.+)$ ]]; then
-    USER="${BASH_REMATCH[1]}"
-    PASSWORD="${BASH_REMATCH[2]}"
-  fi
-  [[ -n "${REDFISH_INSECURE:-}" ]] && INSECURE=1
-fi
-
-# --- Helpers: fetch JSON via redfish-bash or curl ---
-_use_redfish_bash() {
-  [[ -z "$BASE_URL" && -n "$REDFISH_BASH" && -x "$REDFISH_BASH" ]]
-}
-
-# Timeout for Redfish HTTP requests. Override with REDFISH_CONNECT_TIMEOUT / REDFISH_TIMEOUT (seconds).
-REDFISH_CONNECT_TIMEOUT="${REDFISH_CONNECT_TIMEOUT:-15}"
-REDFISH_TIMEOUT="${REDFISH_TIMEOUT:-45}"
-
-_redfish_get() {
-  local path="$1"
-  if _use_redfish_bash; then
-    "$REDFISH_BASH" get "$path" 2>/dev/null || true
-  else
-    # path may be /redfish/v1/Chassis; BASE_URL is https://host/redfish/v1
-    local p="${path#/redfish/v1}"
-    p="${p#/}"
-    local url="${BASE_URL%/}/${p}"
-    if [[ -n "$TOKEN" ]]; then
-      curl -s --connect-timeout "$REDFISH_CONNECT_TIMEOUT" -m "$REDFISH_TIMEOUT" ${INSECURE:+-k} -H "X-Auth-Token: $TOKEN" "$url"
-    elif [[ -n "$USER" && -n "$PASSWORD" ]]; then
-      curl -s --connect-timeout "$REDFISH_CONNECT_TIMEOUT" -m "$REDFISH_TIMEOUT" ${INSECURE:+-k} -u "$USER:$PASSWORD" "$url"
-    else
-      echo "{}"
-    fi
-  fi
-}
-
-# Ensure jq is available
-if ! command -v jq &>/dev/null; then
-  echo "Error: jq is required. Install from https://github.com/jqlang/jq" >&2
+if [[ -z "${bmc:-}" ]] || ! declare -F _redfish_nics_http_get &>/dev/null || ! declare -F _redfish_bmc_v1_root &>/dev/null; then
+  echo "Error: nics.sh is only supported via: redfish-bash.sh nics [...]" >&2
   exit 1
 fi
+BASE_URL="$(_redfish_bmc_v1_root)"
 
 # --- Helpers: PCI BDF and UEFI path ---
 # Build BDF string from bus, device, function (decimal). Output in PCI_ADDR (global) when successful.
@@ -150,39 +73,17 @@ _uefi_path_to_bdf() {
   return 1
 }
 
-# --- Resolve base URL when using redfish-bash ---
-if _use_redfish_bash; then
-  # redfish-bash stores current server in .bmc-current.yaml under its basedir
-  REDFISH_DIR="$(cd "$(dirname "$REDFISH_BASH")" && pwd)"
-  CURRENT_CFG="${REDFISH_DIR}/.bmc-current.yaml"
-  if [[ -f "$CURRENT_CFG" ]]; then
-    if command -v yq &>/dev/null; then
-      BASE_URL="$(yq '.bmc' "$CURRENT_CFG" 2>/dev/null)"
-      if [[ -n "$BASE_URL" ]]; then
-        BASE_URL="${BASE_URL%/}/redfish/v1"
-      fi
-    fi
-  fi
-  if [[ -z "$BASE_URL" ]]; then
-    echo "Error: redfish-bash is set but no current server. Run: $REDFISH_BASH login <bmc_url> <user> <password>" >&2
-    exit 1
-  fi
-elif [[ -z "$BASE_URL" ]]; then
-  echo "Error: specify --bmc-url or use redfish-bash (login first)." >&2
-  exit 1
-fi
-
 # --- Redfish root and Chassis ---
-ROOT="$(_redfish_get /redfish/v1)"
+ROOT="$(_redfish_nics_http_get /redfish/v1)"
 if ! echo "$ROOT" | jq -e . >/dev/null 2>&1; then
-  echo "Error: Redfish root request failed or returned invalid JSON. Check --bmc-url, credentials, network, and use -k for self-signed TLS." >&2
+  echo "Error: Redfish root request failed or returned invalid JSON. Check credentials, network, and login/session." >&2
   [[ -n "$ROOT" && "${#ROOT}" -lt 200 ]] && echo "Response preview: $ROOT" >&2
   exit 1
 fi
 CHASSIS_URI="$(echo "$ROOT" | jq -r '.Chassis["@odata.id"] // .chassis["@odata.id"] // empty')"
 if [[ -z "$CHASSIS_URI" || "$CHASSIS_URI" == "null" ]]; then
   # Some roots omit Chassis link; try the standard Chassis collection path directly
-  CHASSIS_COLL="$(_redfish_get /redfish/v1/Chassis)"
+  CHASSIS_COLL="$(_redfish_nics_http_get /redfish/v1/Chassis)"
   if echo "$CHASSIS_COLL" | jq -e '.Members | length > 0' >/dev/null 2>&1 || echo "$CHASSIS_COLL" | jq -e '.["@odata.id"]' >/dev/null 2>&1; then
     CHASSIS_URI="/redfish/v1/Chassis"
   else
@@ -191,7 +92,7 @@ if [[ -z "$CHASSIS_URI" || "$CHASSIS_URI" == "null" ]]; then
   fi
 fi
 
-CHASSIS_COLL="$(_redfish_get "$CHASSIS_URI")"
+CHASSIS_COLL="$(_redfish_nics_http_get "$CHASSIS_URI")"
 MEMBERS_JSON="$(echo "$CHASSIS_COLL" | jq -r '.Members[]? | .["@odata.id"] // .url // empty' 2>/dev/null)"
 if [[ -z "$MEMBERS_JSON" ]]; then
   echo "No chassis members found."
@@ -203,13 +104,13 @@ NICS_JSON_ARRAY="[]"
 while IFS= read -r ch_uri; do
   if [[ -z "$ch_uri" ]]; then continue; fi
   ch_uri="${ch_uri%/}"
-  CH="$(_redfish_get "$ch_uri")"
+  CH="$(_redfish_nics_http_get "$ch_uri")"
   # Dell: Oem/Dell/DellNIC under chassis (e.g. /redfish/v1/Chassis/System.Embedded.1/Oem/Dell/DellNIC)
   # Response: collection with Members[] (each @odata.id -> .../DellNIC/NIC.Embedded.4-1-1), or inline objects.
   # Each DellNIC object: FQDD, InstanceID, BusNumber, FunctionNumber, SerialNumber, DeviceDescription, NumberOfPorts.
   DELL_NIC_JSON=""
   DELL_NIC_URI="${ch_uri}/Oem/Dell/DellNIC"
-  _tmp="$(_redfish_get "$DELL_NIC_URI")"
+  _tmp="$(_redfish_nics_http_get "$DELL_NIC_URI")"
   if [[ -n "$_tmp" && "$_tmp" != "{}" && "$_tmp" != "null" ]] && echo "$_tmp" | jq -e . >/dev/null 2>&1 && ! echo "$_tmp" | jq -e '.error' >/dev/null 2>&1; then
     # If Members exist and first member lacks BusNumber (links only), fetch each member
     _first_has_bus="$(echo "$_tmp" | jq -r '.Members[0].BusNumber // empty' 2>/dev/null)"
@@ -217,7 +118,7 @@ while IFS= read -r ch_uri; do
       _dell_nic_list="[]"
       while IFS= read -r member_uri; do
         if [[ -z "$member_uri" ]]; then continue; fi
-        _m="$(_redfish_get "$member_uri")"
+        _m="$(_redfish_nics_http_get "$member_uri")"
         _dell_nic_list="$(echo "$_dell_nic_list" | jq --argjson m "$_m" '. + [$m]' 2>/dev/null)"
       done <<< "$(echo "$_tmp" | jq -r '.Members[]? | .["@odata.id"] // empty' 2>/dev/null)"
       [[ -n "$_dell_nic_list" && "$_dell_nic_list" != "[]" ]] && DELL_NIC_JSON="$_dell_nic_list"
@@ -228,7 +129,7 @@ while IFS= read -r ch_uri; do
   # HPE: Chassis/PCIeSlots has Slots[].Location.PartLocation.ServiceLabel (e.g. "OCP Slot A") and LocationOrdinalValue
   # Use to resolve raw adapter Id (DE07A000) to friendly slot name when adapter has no Location/Oem
   PCIE_SLOTS_JSON=""
-  _ps="$(_redfish_get "${ch_uri}/PCIeSlots")"
+  _ps="$(_redfish_nics_http_get "${ch_uri}/PCIeSlots")"
   if [[ -n "$_ps" && "$_ps" != "{}" && "$_ps" != "null" ]] && echo "$_ps" | jq -e '(.Slots | length > 0) or (.Members | length > 0)' >/dev/null 2>&1; then
     PCIE_SLOTS_JSON="$_ps"
   fi
@@ -238,7 +139,7 @@ while IFS= read -r ch_uri; do
     echo "bmc-nic-builder: chassis $ch_uri has no NetworkAdapters link, skipping."
     continue
   fi
-  NA_COLL="$(_redfish_get "$NA_REF")"
+  NA_COLL="$(_redfish_nics_http_get "$NA_REF")"
   ADAPTER_IDS="$(echo "$NA_COLL" | jq -r '.Members[]? | .["@odata.id"] // .url // empty' 2>/dev/null)"
   if [[ -z "$ADAPTER_IDS" ]]; then
     echo "bmc-nic-builder: NetworkAdapters collection has no Members: $NA_REF"
@@ -247,7 +148,7 @@ while IFS= read -r ch_uri; do
   HPE_PCI_USED_BDFS=""
   while IFS= read -r adapter_uri; do
     if [[ -z "$adapter_uri" ]]; then continue; fi
-    ADAPTER="$(_redfish_get "$adapter_uri")"
+    ADAPTER="$(_redfish_nics_http_get "$adapter_uri")"
     # Extract fields to match BMC view + hardware info (standard + Oem.Dell, Oem.Hpe)
     MODEL="$(echo "$ADAPTER" | jq -r '.Model // .Name // "Unknown"')"
     STATE="$(echo "$ADAPTER" | jq -r '.Status.State // .Oem.Dell.NetworkAdapterStatus // .Oem.Dell.State // .Oem.Hpe.State // "Unknown"')"
@@ -274,7 +175,7 @@ while IFS= read -r ch_uri; do
     set +e
     PCIE_REF="$(echo "$ADAPTER" | jq -r '.Links.PCIeDevice["@odata.id"] // .Links.PCIeDevices[0]["@odata.id"] // .Controllers[0].Links.PCIeDevice["@odata.id"] // .Controllers[0].Links.PCIeDevices[0]["@odata.id"] // empty')"
     if [[ -n "$PCIE_REF" && "$PCIE_REF" != "null" ]]; then
-      PCIE_JSON="$(_redfish_get "$PCIE_REF")"
+      PCIE_JSON="$(_redfish_nics_http_get "$PCIE_REF")"
       # PCIeDevice can have PCIeFunctions (array) or single PCIeInterface with Bus/Device/Function (HPE often omits BusNumber for OCP)
       B="$(echo "$PCIE_JSON" | jq -r '(.PCIeInterface.BusNumber // .PCIeFunctions[0].PCIeInterface.BusNumber // .BusNumber // empty) | tostring' 2>/dev/null)"
       D="$(echo "$PCIE_JSON" | jq -r '(.PCIeInterface.DeviceNumber // .PCIeFunctions[0].PCIeInterface.DeviceNumber // .DeviceNumber // 0) | tostring' 2>/dev/null)"
@@ -313,7 +214,7 @@ while IFS= read -r ch_uri; do
     if [[ -z "$PCI_ADDR" || "$PCI_ADDR" == "null" ]]; then
       SYS_URI="$(echo "$CH" | jq -r '.Links.ComputerSystems[0]["@odata.id"] // .ComputerSystems[0]["@odata.id"] // empty' 2>/dev/null)" || SYS_URI=""
       if [[ -n "$SYS_URI" && "$SYS_URI" != "null" ]]; then
-        SYS_PCIE_COLL="$(_redfish_get "${SYS_URI}/PCIeDevices")"
+        SYS_PCIE_COLL="$(_redfish_nics_http_get "${SYS_URI}/PCIeDevices")"
         if [[ -z "$SYS_PCIE_COLL" || "$SYS_PCIE_COLL" == "{}" ]] || echo "$SYS_PCIE_COLL" | jq -e '.error' >/dev/null 2>&1; then
           SYS_PCIE_COLL=""
         fi
@@ -322,7 +223,7 @@ while IFS= read -r ch_uri; do
           set +e
           while IFS= read -r _pcie_dev_uri; do
             if [[ -z "$_pcie_dev_uri" ]]; then continue; fi
-            _pcie_dev="$(_redfish_get "$_pcie_dev_uri")"
+            _pcie_dev="$(_redfish_nics_http_get "$_pcie_dev_uri")"
             _dev_id="$(echo "$_pcie_dev" | jq -r '.Id // ""' 2>/dev/null)"
             _dev_serial="$(echo "$_pcie_dev" | jq -r '.SerialNumber // .Oem.Hpe.SerialNumber // ""' 2>/dev/null)"
             _match=false
@@ -345,7 +246,7 @@ while IFS= read -r ch_uri; do
           unset ADAPTER_ID_PCIE
         fi
         if [[ -z "$PCI_ADDR" || "$PCI_ADDR" == "null" ]]; then
-          SYS_PCI_COLL="$(_redfish_get "${SYS_URI}/PCIDevices")"
+          SYS_PCI_COLL="$(_redfish_nics_http_get "${SYS_URI}/PCIDevices")"
           if [[ -n "$SYS_PCI_COLL" && "$SYS_PCI_COLL" != "{}" ]] && ! echo "$SYS_PCI_COLL" | jq -e '.error' >/dev/null 2>&1; then
             if echo "$SYS_PCI_COLL" | jq -e '.Members[]?' >/dev/null 2>&1; then
               _model_sig="$(echo "$MODEL" | grep -oE 'E[0-9]{3}' | head -1)" || _model_sig=""
@@ -353,7 +254,7 @@ while IFS= read -r ch_uri; do
               if [[ -n "$SERIAL" && "$SERIAL" != "null" ]]; then
                 while IFS= read -r _pci_dev_uri; do
                   if [[ -z "$_pci_dev_uri" ]]; then continue; fi
-                  _pci_dev="$(_redfish_get "$_pci_dev_uri")"
+                  _pci_dev="$(_redfish_nics_http_get "$_pci_dev_uri")"
                   _pci_serial="$(echo "$_pci_dev" | jq -r '.SerialNumber // .Oem.Hpe.SerialNumber // ""' 2>/dev/null)"
                   if [[ "$_pci_serial" == "$SERIAL" ]]; then
                     _pb="$(echo "$_pci_dev" | jq -r '.BusNumber // empty' 2>/dev/null)"
@@ -368,7 +269,7 @@ while IFS= read -r ch_uri; do
               if [[ -z "$PCI_ADDR" || "$PCI_ADDR" == "null" ]] && [[ -n "$_model_sig" ]]; then
                 while IFS= read -r _pci_dev_uri; do
                   if [[ -z "$_pci_dev_uri" ]]; then continue; fi
-                  _pci_dev="$(_redfish_get "$_pci_dev_uri")"
+                  _pci_dev="$(_redfish_nics_http_get "$_pci_dev_uri")"
                   _pb="$(echo "$_pci_dev" | jq -r '.BusNumber // empty' 2>/dev/null)"
                   if [[ -z "$_pb" || "$_pb" == "null" ]]; then continue; fi
                   _pci_name="$(echo "$_pci_dev" | jq -r '.Name // ""' 2>/dev/null)"
@@ -477,11 +378,11 @@ while IFS= read -r ch_uri; do
     PORTS_DETAILS="[]"
     # Prefer NetworkDeviceFunctions when present (matches HPE: one function per port with Ethernet.MACAddress)
     if [[ -n "$NDF_URI" && "$NDF_URI" != "null" ]]; then
-      NDF_COLL="$(_redfish_get "$NDF_URI")"
+      NDF_COLL="$(_redfish_nics_http_get "$NDF_URI")"
       PORT_COUNT="$(echo "$NDF_COLL" | jq -r '.Members | length // 0' 2>/dev/null)"
       while IFS= read -r member_uri; do
         if [[ -z "$member_uri" ]]; then continue; fi
-        MEMBER_JSON="$(_redfish_get "$member_uri")"
+        MEMBER_JSON="$(_redfish_nics_http_get "$member_uri")"
         # NetworkDeviceFunction: MAC in Ethernet.MACAddress or Ethernet.PermanentMACAddress
         MAC="$(echo "$MEMBER_JSON" | jq -r '(.Ethernet.MACAddress // .Ethernet.PermanentMACAddress // "")')"
         LINK="$(echo "$MEMBER_JSON" | jq -r '.Status.State // ""')"
@@ -489,7 +390,7 @@ while IFS= read -r ch_uri; do
         # Optionally follow PhysicalNetworkPortAssignment to Port for LinkStatus and speed
         PORT_REF="$(echo "$MEMBER_JSON" | jq -r '.PhysicalNetworkPortAssignment["@odata.id"] // .AssignablePhysicalNetworkPorts[0]["@odata.id"] // empty')"
         if [[ -n "$PORT_REF" && "$PORT_REF" != "null" ]]; then
-          PORT_JSON="$(_redfish_get "$PORT_REF")"
+          PORT_JSON="$(_redfish_nics_http_get "$PORT_REF")"
           if [[ -z "$LINK" || "$LINK" == "null" ]]; then
             LINK="$(echo "$PORT_JSON" | jq -r '.LinkStatus // ""')"
           fi
@@ -499,11 +400,11 @@ while IFS= read -r ch_uri; do
         PORTS_DETAILS="$(echo "$PORTS_DETAILS" | jq --argjson pe "$PENTRY" '. + [$pe]')"
       done <<< "$(echo "$NDF_COLL" | jq -r '.Members[]? | .["@odata.id"] // empty' 2>/dev/null)"
     elif [[ -n "$NP_URI" && "$NP_URI" != "null" ]]; then
-      PORTS_COLL="$(_redfish_get "$NP_URI")"
+      PORTS_COLL="$(_redfish_nics_http_get "$NP_URI")"
       PORT_COUNT="$(echo "$PORTS_COLL" | jq -r '.Members | length // 0' 2>/dev/null)"
       while IFS= read -r port_uri; do
         if [[ -z "$port_uri" ]]; then continue; fi
-        PORT_JSON="$(_redfish_get "$port_uri")"
+        PORT_JSON="$(_redfish_nics_http_get "$port_uri")"
         # NetworkPort: MAC in AssociatedNetworkAddresses or MACAddress
         MAC="$(echo "$PORT_JSON" | jq -r '(.AssociatedNetworkAddresses[0] // .MACAddress // "")')"
         LINK="$(echo "$PORT_JSON" | jq -r '.LinkStatus // .LinkStatusReason // ""')"
@@ -516,7 +417,7 @@ while IFS= read -r ch_uri; do
     if [[ "$PORT_COUNT" -eq 0 && -n "$NP_LINKS" ]]; then
       while IFS= read -r port_uri; do
         if [[ -z "$port_uri" ]]; then continue; fi
-        PORT_JSON="$(_redfish_get "$port_uri")"
+        PORT_JSON="$(_redfish_nics_http_get "$port_uri")"
         MAC="$(echo "$PORT_JSON" | jq -r '(.AssociatedNetworkAddresses[0] // .MACAddress // "")')"
         LINK="$(echo "$PORT_JSON" | jq -r '.LinkStatus // .LinkStatusReason // ""')"
         SPEED="$(echo "$PORT_JSON" | jq -r 'if .CurrentSpeedGbps != null then "\(.CurrentSpeedGbps) Gbps" elif .SpeedMbps != null then "\(.SpeedMbps) Mbps" else "" end')"
@@ -537,7 +438,7 @@ while IFS= read -r ch_uri; do
     if [[ "$PORT_COUNT" -eq 0 ]]; then
       PORT_URIS=""
       if [[ -n "$PORTS_URI" && "$PORTS_URI" != "null" ]]; then
-        PORTS_COLL="$(_redfish_get "$PORTS_URI")"
+        PORTS_COLL="$(_redfish_nics_http_get "$PORTS_URI")"
         PORT_URIS="$(echo "$PORTS_COLL" | jq -r '.Members[]? | .["@odata.id"] // empty' 2>/dev/null)"
       fi
       if [[ -z "$PORT_URIS" && -n "$CTRL_LINKS_PORTS" ]]; then
@@ -546,7 +447,7 @@ while IFS= read -r ch_uri; do
       if [[ -n "$PORT_URIS" ]]; then
         while IFS= read -r port_uri; do
           if [[ -z "$port_uri" ]]; then continue; fi
-          PORT_JSON="$(_redfish_get "$port_uri")"
+          PORT_JSON="$(_redfish_nics_http_get "$port_uri")"
           MAC="$(echo "$PORT_JSON" | jq -r '(.AssociatedNetworkAddresses[0] // .MACAddress // .Oem.Hpe.MacAddress // "")')"
           LINK="$(echo "$PORT_JSON" | jq -r '.LinkStatus // .LinkStatusReason // .Status.State // .Oem.Hpe.LinkStatus // ""')"
           SPEED="$(echo "$PORT_JSON" | jq -r 'if .CurrentSpeedGbps != null then "\(.CurrentSpeedGbps) Gbps" elif .SpeedMbps != null then "\(.SpeedMbps) Mbps" elif .Oem.Hpe.SpeedMbps != null then "\(.Oem.Hpe.SpeedMbps) Mbps" else "" end')"
@@ -594,22 +495,22 @@ while IFS= read -r ch_uri; do
 done <<< "$MEMBERS_JSON"
 
 # --- Systems: merge EthernetInterfaces into adapters, optional fallback, and server hardware ---
-SYS_COLL="$(_redfish_get "/redfish/v1/Systems")"
+SYS_COLL="$(_redfish_nics_http_get "/redfish/v1/Systems")"
 SYS_ID="$(echo "$SYS_COLL" | jq -r '.Members[0]["@odata.id"] // empty')"
 SYS_JSON=""
-[[ -n "$SYS_ID" && "$SYS_ID" != "null" ]] && SYS_JSON="$(_redfish_get "$SYS_ID")"
+[[ -n "$SYS_ID" && "$SYS_ID" != "null" ]] && SYS_JSON="$(_redfish_nics_http_get "$SYS_ID")"
 
 # Merge EthernetInterfaces (with Links.NetworkAdapter) into adapters that have 0 ports
 if [[ -n "$SYS_ID" && "$SYS_ID" != "null" ]]; then
   EI_REF="$(echo "$SYS_JSON" | jq -r '.EthernetInterfaces["@odata.id"] // empty')"
   if [[ -n "$EI_REF" && "$EI_REF" != "null" ]]; then
-    EI_COLL="$(_redfish_get "$EI_REF")"
+    EI_COLL="$(_redfish_nics_http_get "$EI_REF")"
     EI_MEMBERS="$(echo "$EI_COLL" | jq -r '.Members[]? | .["@odata.id"] // empty' 2>/dev/null)"
     # Build adapter_uri -> [ {mac, linkStatus, speed} ] from EthernetInterfaces that have Links.NetworkAdapter
     EI_MAP="{}"
     while IFS= read -r ei_uri; do
       if [[ -z "$ei_uri" ]]; then continue; fi
-      EI="$(_redfish_get "$ei_uri")"
+      EI="$(_redfish_nics_http_get "$ei_uri")"
       NA_LINK="$(echo "$EI" | jq -r '.Links.NetworkAdapter["@odata.id"] // empty')"
       if [[ -z "$NA_LINK" || "$NA_LINK" == "null" ]]; then continue; fi
       MAC="$(echo "$EI" | jq -r '.MACAddress // ""')"
@@ -641,11 +542,11 @@ fi
 if [[ "$(echo "$NICS_JSON_ARRAY" | jq 'length')" -eq 0 ]] && [[ -n "$SYS_ID" && "$SYS_ID" != "null" ]]; then
   EI_REF="$(echo "$SYS_JSON" | jq -r '.EthernetInterfaces["@odata.id"] // empty')"
   if [[ -n "$EI_REF" && "$EI_REF" != "null" ]]; then
-    EI_COLL="$(_redfish_get "$EI_REF")"
+    EI_COLL="$(_redfish_nics_http_get "$EI_REF")"
     EI_MEMBERS="$(echo "$EI_COLL" | jq -r '.Members[]? | .["@odata.id"] // empty' 2>/dev/null)"
     while IFS= read -r ei_uri; do
         if [[ -z "$ei_uri" ]]; then continue; fi
-        EI="$(_redfish_get "$ei_uri")"
+        EI="$(_redfish_nics_http_get "$ei_uri")"
         MODEL="$(echo "$EI" | jq -r '.Name // .Id // "Ethernet Interface"')"
         STATE="$(echo "$EI" | jq -r '.InterfaceEnabled // .Status.State // "Unknown"')"
         HEALTH="$(echo "$EI" | jq -r '.Status.Health // "Unknown"')"
@@ -672,7 +573,7 @@ SERVER_HW_JSON="null"
 CHASSIS_ID_HW="$(echo "$MEMBERS_JSON" | head -1)"
 if [[ -n "$SYS_ID" && "$SYS_ID" != "null" && -n "$SYS_JSON" ]]; then
   CH_JSON_HW="{}"
-  [[ -n "$CHASSIS_ID_HW" ]] && CH_JSON_HW="$(_redfish_get "$CHASSIS_ID_HW")"
+  [[ -n "$CHASSIS_ID_HW" ]] && CH_JSON_HW="$(_redfish_nics_http_get "$CHASSIS_ID_HW")"
   SERVER_HW_JSON="$(jq -n \
     --arg sm "$(echo "$SYS_JSON" | jq -r '.Manufacturer // ""')" \
     --arg so "$(echo "$SYS_JSON" | jq -r '.Model // ""')" \

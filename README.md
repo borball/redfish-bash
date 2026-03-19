@@ -950,18 +950,12 @@ redfish-bash.sh eths
 
 ### nics
 
-Fetch NIC (network adapter) inventory from the BMC and show a card view (model, state, health, location, PCI address, ports, MACs). Uses the current server from `login` or `server N`; base URL and auth are passed from `redfish-bash.sh` so no subprocess is used per request.
+Fetch NIC (network adapter) inventory from the BMC and show a card view (model, state, health, location, PCI address, ports, MACs). Uses the current server from `login` or `server N`; `redfish-bash.sh` exports the same **`CURL`** (and **`bmc`**) as `get`, so each request does not spawn a `redfish-bash` subprocess.
 
 ```shell
 redfish-bash.sh nics                    # card view (default)
 redfish-bash.sh nics --json             # raw JSON only
 redfish-bash.sh nics --json -o nics.json   # JSON to file
-```
-
-You can also run `nics.sh` directly from the repo (after `redfish-bash.sh login`); it will use the same config when `REDFISH_BASE_URL` is set by the parent, or fall back to `redfish-bash.sh get` when run standalone. For fully standalone use (no redfish-bash config), run with explicit URL and credentials:
-
-```shell
-./nics.sh --bmc-url https://<bmc>/redfish/v1 -u <user> -p <password> -k
 ```
 
 ### eths — example output

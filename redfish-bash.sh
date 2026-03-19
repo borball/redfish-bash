@@ -743,10 +743,16 @@ root(){
   fi
 }
 
-get(){
-  # Normalize so both bmc=https://host and bmc=https://host/redfish/v1 work (e.g. for nics subcommand)
+# Normalized https://host/redfish/v1 from $bmc (no trailing slash). Used by get, nics helper, nics.sh metadata.
+_redfish_bmc_v1_root() {
   local base="${bmc%/}"
   [[ "$base" != */redfish/v1 ]] && base="${base}/redfish/v1"
+  printf '%s' "$base"
+}
+
+get(){
+  local base
+  base="$(_redfish_bmc_v1_root)"
   if [ -n "$parameters" ]; then
     local path="${parameters#/redfish/v1}"
     path="${path:-/}"
@@ -755,6 +761,16 @@ get(){
   else
     $CURL -sk "$base" |jq
   fi
+}
+
+# Raw JSON GET for tools invoked as children (e.g. nics.sh); same $bmc and $CURL as get(), no jq.
+_redfish_nics_http_get() {
+  local path="$1" base rel url
+  base="$(_redfish_bmc_v1_root)"
+  rel="${path#/redfish/v1}"
+  rel="${rel#/}"
+  url="${base}/${rel}"
+  $CURL -s --connect-timeout "${REDFISH_CONNECT_TIMEOUT:-15}" -m "${REDFISH_TIMEOUT:-45}" "$url"
 }
 
 if [ $# -lt 1 ]
@@ -789,17 +805,14 @@ else
   export uuid=$(yq ".uuid" "$CURRENT_SERVERS_CFG" 2>/dev/null)
 
   if [ "nics" = "$cmd" ]; then
-    # Pass base URL and auth to nics.sh so it uses direct curl (no subprocess per request)
-    _base="${bmc%/}"
-    [[ "$_base" != */redfish/v1 ]] && _base="${_base}/redfish/v1"
-    export REDFISH_BASE_URL="$_base"
-    if [[ "$AUTH_METHOD" == "session" && -n "${SESSION_TOKEN:-}" ]]; then
-      export REDFISH_SESSION_TOKEN="$SESSION_TOKEN"
-    elif [[ -n "$(yq ".userPass" "$CURRENT_SERVERS_CFG" 2>/dev/null)" && "$(yq ".userPass" "$CURRENT_SERVERS_CFG" 2>/dev/null)" != "null" ]]; then
-      export REDFISH_USER_PASS="$(yq ".userPass" "$CURRENT_SERVERS_CFG" 2>/dev/null)"
+    # Same $CURL / $bmc as get(); nics.sh uses exported _redfish_bmc_v1_root + _redfish_nics_http_get (no subprocess per request)
+    export CURL
+    if [[ "$CURL" == _curl_session* ]]; then
+      export -f _curl_session
     fi
-    export REDFISH_INSECURE=1
-    REDFISH_BASH="$BASEDIR/redfish-bash.sh" "$BASEDIR/nics.sh" "${@:2}"
+    export -f _redfish_bmc_v1_root
+    export -f _redfish_nics_http_get
+    "$BASEDIR/nics.sh" "${@:2}"
     exit $?
   fi
 
