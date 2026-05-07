@@ -690,11 +690,11 @@ virtual-media(){
 boot-once-from-cd() {
   local system=$(_system)
   local manager=$(_manager)
-  local model=$($CURL -s "$manager" | jq -r '.Model // empty')
 
-  # iDRAC 10 (17G+): BootSourceOverrideTarget "Cd" only targets the physical CD drive,
+  # Dell iDRAC 10+: BootSourceOverrideTarget "Cd" only targets the physical CD drive,
   # not the Redfish-mounted virtual media. Use Dell OEM Manager Attributes instead.
-  if [[ "$model" =~ 1[7-9]G|[2-9][0-9]G ]]; then
+  if [[ "$manager" == *iDRAC* ]] && \
+     [[ -n $($CURL -s "$manager/Attributes" | jq -r '.Attributes."ServerBoot.1.FirstBootDevice" // empty') ]]; then
     $CURL --globoff -L -w "%{http_code} %{url_effective}\\n" \
     -H "Content-Type: application/json" -H "Accept: application/json" \
     -d '{"Attributes":{"ServerBoot.1.FirstBootDevice":"VCD-DVD","VirtualMedia.1.BootOnce":"Enabled"}}' \
