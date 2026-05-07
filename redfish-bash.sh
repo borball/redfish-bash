@@ -693,12 +693,16 @@ boot-once-from-cd() {
 
   # Dell iDRAC 10+: BootSourceOverrideTarget "Cd" only targets the physical CD drive,
   # not the Redfish-mounted virtual media. Use Dell OEM Manager Attributes instead.
+  if [[ "$manager" == *iDRAC* ]]; then
+    local idrac_id="${manager##*/}"
+    local oem_attr_url="${manager}/Oem/Dell/DellAttributes/${idrac_id}"
+  fi
   if [[ "$manager" == *iDRAC* ]] && \
-     [[ -n $($CURL -s "$manager/Attributes" | jq -r '.Attributes."ServerBoot.1.FirstBootDevice" // empty') ]]; then
+     [[ -n $($CURL -s "$oem_attr_url" | jq -r '.Attributes."ServerBoot.1.FirstBootDevice" // empty') ]]; then
     $CURL --globoff -L -w "%{http_code} %{url_effective}\\n" \
     -H "Content-Type: application/json" -H "Accept: application/json" \
     -d '{"Attributes":{"ServerBoot.1.FirstBootDevice":"VCD-DVD","VirtualMedia.1.BootOnce":"Enabled"}}' \
-    -X PATCH "$manager/Attributes"
+    -X PATCH "$oem_attr_url"
   elif [[ -z $($CURL --globoff -sk $system/Settings| jq -r '.Boot["BootSourceOverrideTarget@Redfish.AllowableValues"] // empty') ]]; then
     $CURL --globoff  -L -w "%{http_code} %{url_effective}\\n" \
     -H "Content-Type: application/json" -H "Accept: application/json" \
